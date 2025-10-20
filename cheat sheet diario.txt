@@ -1,0 +1,14 @@
+# Levantar contenedores
+cd infra && docker compose up -d
+
+# Migrar/seed rápido si limpias DB
+cd ../backend
+npx prisma migrate reset --force
+npx prisma generate
+npm run bootstrap
+
+# Correr API
+npm run dev
+
+# Prueba E2E end-to-end
+npm run smoke:e2e

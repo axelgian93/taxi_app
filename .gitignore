@@ -1,0 +1,21 @@
+# node
+node_modules
+npm-debug.log*
+pnpm-lock.yaml
+yarn.lock
+
+# env
+.env
+.env.*
+
+# os junk
+.DS_Store
+Thumbs.db
+
+# flutter
+**/build/
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/

@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: taxi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: taxi
+      POSTGRES_PASSWORD: taxi123
+      POSTGRES_DB: taxi_app
+    ports:
+      - "127.0.0.1:55432:5432"  # 👈 puerto alto y atado al loopback
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxi -d taxi_app -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: taxi_redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+  redis_data:

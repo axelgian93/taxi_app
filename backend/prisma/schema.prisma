@@ -1,0 +1,259 @@
+// prisma/schema.prisma
+// ─────────────────────────────────────────────────────────────────────────────
+// Si tuvieras modelos generados por `db pull` (p.ej. de PostGIS), puedes
+// volver a introspectar luego. Para la app de taxi, este es el esquema base.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Ej: postgresql://user:pass@localhost:5432/taxi_app?schema=taxi_app
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// ENU MS
+/// ─────────────────────────────────────────────────────────────────────────────
+enum Role {
+  ADMIN
+  DRIVER
+  RIDER
+}
+
+enum DriverStatus {
+  OFFLINE
+  IDLE // conectado y disponible
+  ON_TRIP
+  SUSPENDED
+}
+
+enum TripStatus {
+  REQUESTED
+  ASSIGNED
+  ACCEPTED
+  ARRIVED
+  STARTED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum VehicleType {
+  SEDAN
+  SUV
+  VAN
+  MOTORCYCLE
+  TRUCK
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// MODELOS PRINCIPALES
+/// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  phone        String?  @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         Role     @default(RIDER)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Perfiles (según rol)
+  driverProfile DriverProfile?
+  riderProfile  RiderProfile?
+
+  // Viajes
+  tripsAsRider  Trip[] @relation("RiderTrips")
+  tripsAsDriver Trip[] @relation("DriverTrips")
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model RiderProfile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultPaymentMethodId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model DriverProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  licenseNumber    String       @unique
+  licenseExpiresAt DateTime?
+  status           DriverStatus @default(OFFLINE)
+
+  // Ubicación actual
+  currentLat        Decimal?  @db.Decimal(9, 6)
+  currentLng        Decimal?  @db.Decimal(9, 6)
+  locationUpdatedAt DateTime?
+
+  rating     Decimal? @db.Decimal(3, 2) // 0.00 - 5.00
+  totalTrips Int      @default(0)
+  documents  Json?
+
+  // Relación con vehículo (1:1)
+  vehicle Vehicle?
+
+  // Historial de ubicaciones (lado opuesto de la relación nombrada)
+  locations DriverLocationHistory[] @relation("DriverLocationHistoryByDriver")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([locationUpdatedAt])
+  @@index([currentLat, currentLng])
+}
+
+model Vehicle {
+  id       String        @id @default(cuid())
+  driverId String        @unique
+  driver   DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  type     VehicleType
+  plate    String      @unique
+  brand    String
+  model    String
+  color    String?
+  year     Int?
+  seats    Int         @default(4)
+  isActive Boolean     @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  trips Trip[]
+}
+
+model Trip {
+  id String @id @default(cuid())
+
+  // Pasajero
+  riderId String
+  rider   User   @relation("RiderTrips", fields: [riderId], references: [id])
+
+  // Conductor (opcional hasta asignación)
+  driverId String?
+  driver   User?   @relation("DriverTrips", fields: [driverId], references: [id])
+
+  // Vehículo (opcional)
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  status TripStatus @default(REQUESTED)
+
+  requestedAt  DateTime  @default(now())
+  assignedAt   DateTime?
+  acceptedAt   DateTime?
+  arrivedAt    DateTime?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  canceledAt   DateTime?
+  cancelReason String?
+
+  // Ubicaciones
+  pickupLat     Decimal @db.Decimal(9, 6)
+  pickupLng     Decimal @db.Decimal(9, 6)
+  pickupAddress String?
+
+  dropoffLat     Decimal @db.Decimal(9, 6)
+  dropoffLng     Decimal @db.Decimal(9, 6)
+  dropoffAddress String?
+
+  // Métricas
+  distanceKm  Decimal? @db.Decimal(10, 3)
+  durationMin Int?
+  costUsd     Decimal? @db.Decimal(10, 2)
+  currency    String   @default("USD")
+
+  // Congelar reglas aplicadas para auditoría
+  pricingSnapshot Json?
+
+  payment Payment?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, requestedAt])
+  @@index([driverId])
+  @@index([riderId])
+}
+
+model Payment {
+  id     String @id @default(cuid())
+  tripId String @unique
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  amountUsd  Decimal       @db.Decimal(10, 2)
+  status     PaymentStatus @default(PENDING)
+  method     String // "CASH" | "CARD" | "TRANSFER" | etc.
+  provider   String? // "Stripe" | "PayPhone" | "Datafast" | etc.
+  externalId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model TariffRule {
+  id     String  @id @default(cuid())
+  city   String
+  active Boolean @default(true)
+
+  baseFareUsd Decimal @db.Decimal(10, 2)
+  perKmUsd    Decimal @db.Decimal(10, 2)
+  perMinUsd   Decimal @db.Decimal(10, 2)
+  minFareUsd  Decimal @default(0) @db.Decimal(10, 2)
+
+  // Multiplicadores
+  nightMultiplier   Decimal @default(1.00) @db.Decimal(4, 2)
+  weekendMultiplier Decimal @default(1.00) @db.Decimal(4, 2)
+  surgeMultiplier   Decimal @default(1.00) @db.Decimal(4, 2)
+
+  // Rango horario de noche (0-23, hora local)
+  nightStartHour Int?
+  nightEndHour   Int?
+
+  validFrom DateTime?
+  validTo   DateTime?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([city, active])
+}
+
+/// Histórico de ubicación del conductor
+model DriverLocationHistory {
+  id         String        @id @default(cuid())
+  driverId   String
+  // Relación nombrada y con lado opuesto en DriverProfile.locations
+  driver     DriverProfile @relation("DriverLocationHistoryByDriver", fields: [driverId], references: [id], onDelete: Cascade)
+  lat        Decimal       @db.Decimal(9, 6)
+  lng        Decimal       @db.Decimal(9, 6)
+  recordedAt DateTime      @default(now())
+
+  @@index([driverId, recordedAt(sort: Desc)])
+}

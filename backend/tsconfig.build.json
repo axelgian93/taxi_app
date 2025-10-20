@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    /* Build real: compila solo src a dist */
+    "noEmit": false,
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "sourceMap": true
+  },
+  "include": ["src"],
+  "exclude": ["scripts", "node_modules", "dist"]
+}
