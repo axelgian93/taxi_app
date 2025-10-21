@@ -1,115 +1,109 @@
 // scripts/seed-test-trips.ts
-import { PrismaClient, TripStatus } from '@prisma/client'
+import 'dotenv/config'
 
-const prisma = new PrismaClient()
+// Usa fetch nativo de Node 22
+const BASE = `http://localhost:${process.env.PORT || 8080}`
 
-async function main() {
-  const rider = await prisma.user.findUnique({ where: { id: 'u_rider' } })
-  const driver = await prisma.user.findUnique({ where: { id: 'u_driver' } })
-  const vehicle = await prisma.vehicle.findFirst({ where: { driverId: 'dp_driver' } })
-  const tariff = await prisma.tariffRule.findFirst({ where: { city: 'Guayaquil', active: true } })
+type LoginResponse = {
+  token: string
+  user: { id: string; email: string; role: 'ADMIN' | 'DRIVER' | 'RIDER' }
+}
+type TripResp = { ok: boolean; trip: { id: string; status: string } }
 
-  if (!rider || !driver || !vehicle || !tariff) {
-    throw new Error('Faltan datos base (rider, driver, vehicle o tarifa). Corre primero: npm run bootstrap')
-  }
+const center = { lat: -2.170, lng: -79.922 } // GYE centro aproximado
 
-  // Snapshot JSON-serializable (sin Decimal)
-  const ruleSnapshot = {
-    id: tariff.id,
-    city: tariff.city,
-    active: tariff.active,
-    baseFareUsd: Number(tariff.baseFareUsd),
-    perKmUsd: Number(tariff.perKmUsd),
-    perMinUsd: Number(tariff.perMinUsd),
-    minFareUsd: Number(tariff.minFareUsd ?? 0),
-    nightMultiplier: Number(tariff.nightMultiplier ?? 1),
-    weekendMultiplier: Number(tariff.weekendMultiplier ?? 1),
-    surgeMultiplier: Number(tariff.surgeMultiplier ?? 1),
-    nightStartHour: tariff.nightStartHour,
-    nightEndHour: tariff.nightEndHour,
-    validFrom: tariff.validFrom?.toISOString() ?? null,
-    validTo: tariff.validTo?.toISOString() ?? null,
-    updatedAt: tariff.updatedAt.toISOString(),
-  }
-
-  console.log('🚕 Creando viajes de prueba para /admin/trips...')
-
-  const trips: Array<{
-    status: TripStatus
-    distanceKm: number
-    durationMin: number
-    costUsd: number
-    requestedAt: Date
-    completedAt?: Date
-    canceledAt?: Date
-    cancelReason?: string
-  }> = [
-    {
-      status: TripStatus.COMPLETED,
-      distanceKm: 4.3,
-      durationMin: 12,
-      costUsd: 3.2,
-      requestedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
-      completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2 + 20 * 60000),
-    },
-    {
-      status: TripStatus.COMPLETED,
-      distanceKm: 6.8,
-      durationMin: 18,
-      costUsd: 4.8,
-      requestedAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-      completedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 + 25 * 60000),
-    },
-    {
-      status: TripStatus.CANCELED,
-      distanceKm: 3.1,
-      durationMin: 9,
-      costUsd: 2.5,
-      cancelReason: 'El pasajero canceló',
-      requestedAt: new Date(Date.now() - 1000 * 60 * 60 * 8),
-      canceledAt: new Date(Date.now() - 1000 * 60 * 60 * 7 + 15 * 60000),
-    },
-    {
-      status: TripStatus.ASSIGNED,
-      distanceKm: 5.5,
-      durationMin: 16,
-      costUsd: 4.1,
-      requestedAt: new Date(),
-    },
-  ]
-
-  for (const t of trips) {
-    await prisma.trip.create({
-      data: {
-        riderId: rider.id,
-        driverId: driver.id,
-        vehicleId: vehicle.id,
-        status: t.status,
-        requestedAt: t.requestedAt,
-        completedAt: t.completedAt ?? null,
-        canceledAt: t.canceledAt ?? null,
-        cancelReason: t.cancelReason ?? null,
-        distanceKm: t.distanceKm,
-        durationMin: t.durationMin,
-        costUsd: t.costUsd,
-        currency: 'USD',
-        pickupLat: -2.170,
-        pickupLng: -79.922,
-        dropoffLat: -2.190,
-        dropoffLng: -79.890,
-        pickupAddress: 'Centro',
-        dropoffAddress: 'Norte',
-        pricingSnapshot: ruleSnapshot, // 👈 JSON plano
-      },
-    })
-  }
-
-  console.log(`✅ Se crearon ${trips.length} viajes de prueba.`)
+function deg2rad(d: number) { return d * Math.PI / 180 }
+function haversineKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371
+  const dLat = deg2rad(b.lat - a.lat)
+  const dLng = deg2rad(b.lng - a.lng)
+  const la1 = deg2rad(a.lat), la2 = deg2rad(b.lat)
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
+function randBetween(min: number, max: number) {
+  return Math.random() * (max - min) + min
+}
+function jitterCoord(base: { lat: number; lng: number }, maxKm: number) {
+  // ~1 km ~ 0.009 deg lat; lon ajusta por cos(lat)
+  const latOff = randBetween(-maxKm, maxKm) * 0.009
+  const lonOff = randBetween(-maxKm, maxKm) * 0.009 / Math.cos(deg2rad(base.lat))
+  return { lat: Number((base.lat + latOff).toFixed(6)), lng: Number((base.lng + lonOff).toFixed(6)) }
 }
 
-main()
-  .catch((e) => {
-    console.error('❌ Error en seed-test-trips:', e)
-    process.exitCode = 1
+async function login(email: string, password: string): Promise<LoginResponse> {
+  const res = await fetch(`${BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
   })
-  .finally(() => prisma.$disconnect())
+  if (!res.ok) throw new Error(`Login ${email} -> ${res.status} ${await res.text()}`)
+  return (await res.json()) as LoginResponse
+}
+async function post<T = any>(url: string, token: string, body?: unknown): Promise<T> {
+  const hasBody = body !== undefined
+  const res = await fetch(`${BASE}${url}`, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${token}`,
+      ...(hasBody ? { 'content-type': 'application/json' } : {}),
+    },
+    body: hasBody ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) throw new Error(`POST ${url} -> ${res.status} ${await res.text()}`)
+  return (await res.json()) as T
+}
+
+async function seedTrips(total: number) {
+  console.log(`🚀 Sembrando ${total} viajes demo...`)
+  const rider = await login('rider@taxi.local', '123456')
+  const driver = await login('driver@taxi.local', '123456')
+
+  for (let i = 1; i <= total; i++) {
+    // Ubicación del driver (cerca del centro)
+    const driverPos = jitterCoord(center, 1.0)
+    await post('/drivers/location', driver.token, driverPos)
+    await post('/drivers/status', driver.token, { status: 'IDLE' })
+
+    // Pickup (cerca del driver) y dropoff (algo más lejos)
+    const pickup = jitterCoord(driverPos, 0.6)
+    const dropoff = jitterCoord(center, randBetween(2.5, 6.0)) // 2.5 a 6 km del centro aprox
+
+    const distanceKm = Number(haversineKm(pickup, dropoff).toFixed(2))
+    // Duración estimada (min): 3.2–4.5 min/km + ruido
+    const durationMin = Math.max(7, Math.round(distanceKm * randBetween(3.2, 4.5) + randBetween(-1, 3)))
+
+    // Request trip
+    const body = {
+      city: 'Guayaquil',
+      pickupLat: pickup.lat,
+      pickupLng: pickup.lng,
+      pickupAddress: `Pickup ${i}`,
+      dropoffLat: dropoff.lat,
+      dropoffLng: dropoff.lng,
+      dropoffAddress: `Dropoff ${i}`,
+      distanceKm,
+      durationMin,
+    }
+
+    const requested = await post<TripResp>('/trips/request', rider.token, body)
+    const tripId = requested.trip.id
+    console.log(`🟡 [${i}/${total}] ASSIGNED → ${tripId} | ${distanceKm} km, ${durationMin} min`)
+
+    // Driver flow
+    await post(`/trips/${tripId}/accept`, driver.token)
+    await post(`/trips/${tripId}/arrived`, driver.token)
+    await post(`/trips/${tripId}/start`, driver.token)
+    await post(`/trips/${tripId}/complete`, driver.token)
+
+    console.log(`✅ [${i}/${total}] COMPLETED → ${tripId}`)
+  }
+
+  console.log('🎉 Seed demo trips: OK')
+}
+
+const countArg = Number(process.argv[2] || process.env.SEED_TRIPS || 10)
+seedTrips(Number.isFinite(countArg) && countArg > 0 ? countArg : 10).catch((e) => {
+  console.error('❌ Seed failed:', e)
+  process.exit(1)
+})
