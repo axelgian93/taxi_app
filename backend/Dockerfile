@@ -3,26 +3,27 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# 1) Copiamos manifiestos primero para cachear instalación
+# 1) Copiamos manifiestos primero para cache
 COPY package.json package-lock.json* ./
 
-# 2) Instalamos TODAS las deps para poder compilar y generar Prisma Client
+# 2) Instalamos dependencias
 RUN npm ci
 
-# 3) Copiamos el código y los assets necesarios
+# 3) Copiamos código y prisma
 COPY prisma ./prisma
 COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 
-# 4) Compilamos a JS y generamos Prisma Client
+# 4) Compilamos y generamos Prisma Client
 RUN npm run build && npx prisma generate
 
-# 5) Podamos devDependencies para una imagen más ligera
+# 5) Podamos devDependencies
 RUN npm prune --omit=dev
 
 # 6) Copiamos script de arranque
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Normalizamos fin de línea por si se creó con CRLF en Windows
+RUN sed -i 's/\r$//' /entrypoint.sh && chmod +x /entrypoint.sh
 
 EXPOSE 8080
 ENTRYPOINT ["/entrypoint.sh"]

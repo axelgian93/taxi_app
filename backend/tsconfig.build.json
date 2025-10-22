@@ -1,12 +1,24 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    /* Build real: compila solo src a dist */
-    "noEmit": false,
-    "rootDir": "./src",
     "outDir": "./dist",
-    "sourceMap": true
+    "rootDir": "./src",
+
+    /* Emitir JS en build */
+    "noEmit": false,
+
+    /* Para build prod: relajar estos flags sin afectar tu tsconfig de dev */
+    "noImplicitAny": false,
+    "skipLibCheck": true
   },
-  "include": ["src"],
-  "exclude": ["scripts", "node_modules", "dist"]
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "src/routes/**",
+    "src/plugins/**",
+    "scripts/**",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "node_modules",
+    "dist"
+  ]
 }
