@@ -1,0 +1,54 @@
+# docker-compose.yml (raíz)
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: taxi_db
+    environment:
+      POSTGRES_USER: taxi
+      POSTGRES_PASSWORD: taxi123
+      POSTGRES_DB: taxi_app
+    ports:
+      # expone para herramientas locales si quieres (opcional)
+      - "55432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taxi -d taxi_app -h localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: taxi_redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taxi_api
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # Si quieres live-reload en dev, comenta build y usa volumes+ts-node-dev.
+    # Este servicio está pensado para modo "prod" (dist).
+
+volumes:
+  db_data:
+  redis_data:

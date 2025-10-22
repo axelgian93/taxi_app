@@ -1,0 +1,8 @@
+node_modules
+npm-debug.log
+Dockerfile
+entrypoint.sh
+dist/*.map
+dist/**/*.map
+.env
+.env.*
