@@ -15,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -29,6 +30,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    restart: unless-stopped
 
   # ---------- PERFIL PRODUCCIÓN ----------
   api:
@@ -39,12 +41,13 @@ services:
     env_file:
       - ./backend/.env.docker
     ports:
-      - "8080:8080"
+      - "8080:8080"   # Prod expone 8080 en host
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
     profiles: ["prod"]
 
   # ---------- PERFIL DESARROLLO (hot-reload) ----------
@@ -53,9 +56,9 @@ services:
     container_name: taxi_api_dev
     working_dir: /app
     env_file:
-      - ./backend/.env.dev.docker
+      - ./backend/.env.dev.docker   # si no lo tienes, usa .env.docker
     environment:
-      CHOKIDAR_USEPOLLING: "1"
+      CHOKIDAR_USEPOLLING: "1"      # necesario para hot-reload en Windows
     command: >
       sh -c "
       npm ci &&
@@ -67,12 +70,13 @@ services:
       - ./backend:/app
       - node_deps:/app/node_modules
     ports:
-      - "8081:8080"   # 👈 dev expone 8081 en el host
+      - "8081:8080"                 # Dev expone 8081 en host (evita colisión con prod)
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
+    restart: unless-stopped
     profiles: ["dev"]
 
 volumes:

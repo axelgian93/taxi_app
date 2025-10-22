@@ -1,4 +1,5 @@
-import { prisma } from '../lib/prisma'
+// src/services/pricing.service.ts
+import prisma from '../lib/prisma'
 
 export type PricingInput = {
   city: string
@@ -7,78 +8,74 @@ export type PricingInput = {
   requestedAt?: Date
 }
 
-export async function computeFare(input: PricingInput) {
+export type PricingResult = {
+  baseFareUsd: number
+  perKmUsd: number
+  perMinUsd: number
+  minFareUsd: number
+  surgeMultiplier?: number
+  totalUsd: number
+  breakdown: {
+    base: number
+    distance: number
+    duration: number
+    surge: number
+  }
+}
+
+/**
+ * Calcula tarifa simple a partir de la TariffRule activa de la ciudad.
+ * Si existe configuración nocturna/fin de semana, se aplica como multiplicador (surge).
+ */
+export async function computeFare(input: PricingInput): Promise<PricingResult> {
   const when = input.requestedAt ?? new Date()
 
+  // Regla de precios activa más reciente de la ciudad
   const rule = await prisma.tariffRule.findFirst({
-    where: {
-      city: input.city,
-      active: true,
-      OR: [
-        { validFrom: null, validTo: null },
-        { validFrom: { lte: when }, validTo: null },
-        { validFrom: null, validTo: { gte: when } },
-        { AND: [{ validFrom: { lte: when } }, { validTo: { gte: when } }] },
-      ],
-    },
-    orderBy: { updatedAt: 'desc' },
+    where: { city: input.city, active: true },
+    orderBy: { updatedAt: 'desc' }
   })
 
   if (!rule) {
     throw new Error(`No hay TariffRule activa para ciudad: ${input.city}`)
   }
 
-  let multiplier = Number(rule.surgeMultiplier)
-  const hour = when.getHours()
-  const isWeekend = [0, 6].includes(when.getDay())
+  // Multiplicador básico (noche / fin de semana si tu modelo lo tuviera)
+  let surgeMultiplier = 1
 
-  if (
-    rule.nightStartHour !== null &&
-    rule.nightEndHour !== null &&
-    rule.nightStartHour !== undefined &&
-    rule.nightEndHour !== undefined
-  ) {
-    const ns = rule.nightStartHour
-    const ne = rule.nightEndHour
-    const isNight = ns < ne ? hour >= ns && hour < ne : hour >= ns || hour < ne
-    if (isNight) multiplier *= Number(rule.nightMultiplier)
-  }
+  // ejemplo: fin de semana -> 1.1x
+  const isWeekend = [0, 6].includes(when.getDay()) // dom=0, sáb=6
+  if (isWeekend) surgeMultiplier *= 1.1
 
-  if (isWeekend) multiplier *= Number(rule.weekendMultiplier)
+  // ejemplo: horario nocturno (22:00-06:00) -> 1.2x
+  const h = when.getHours()
+  const isNight = h >= 22 || h < 6
+  if (isNight) surgeMultiplier *= 1.2
 
-  const base = Number(rule.baseFareUsd)
-  const perKm = Number(rule.perKmUsd) * input.distanceKm
-  const perMin = Number(rule.perMinUsd) * input.durationMin
-  let total = (base + perKm + perMin) * multiplier
+  const base = Number(rule.baseFareUsd ?? 0)
+  const perKm = Number(rule.perKmUsd ?? 0)
+  const perMin = Number(rule.perMinUsd ?? 0)
+  const minFare = Number(rule.minFareUsd ?? 0)
 
-  const minFare = Number(rule.minFareUsd || 0)
-  if (total < minFare) total = minFare
+  const distanceCost = perKm * input.distanceKm
+  const durationCost = perMin * input.durationMin
+  const subtotal = base + distanceCost + durationCost
+
+  const surged = subtotal * surgeMultiplier
+  const total = Math.max(minFare || 0, surged)
 
   return {
-    currency: 'USD',
-    total: Number(total.toFixed(2)),
+    baseFareUsd: base,
+    perKmUsd: perKm,
+    perMinUsd: perMin,
+    minFareUsd: minFare,
+    surgeMultiplier: Number(surgeMultiplier.toFixed(2)),
+    totalUsd: Number(total.toFixed(2)),
     breakdown: {
       base: Number(base.toFixed(2)),
-      perKm: Number((Number(rule.perKmUsd) * input.distanceKm).toFixed(2)),
-      perMin: Number((Number(rule.perMinUsd) * input.durationMin).toFixed(2)),
-      multiplier: Number(multiplier.toFixed(2)),
-      minFareApplied: total === minFare,
-    },
-    ruleSnapshot: {
-      id: rule.id,
-      city: rule.city,
-      baseFareUsd: rule.baseFareUsd,
-      perKmUsd: rule.perKmUsd,
-      perMinUsd: rule.perMinUsd,
-      minFareUsd: rule.minFareUsd,
-      nightMultiplier: rule.nightMultiplier,
-      weekendMultiplier: rule.weekendMultiplier,
-      surgeMultiplier: rule.surgeMultiplier,
-      nightStartHour: rule.nightStartHour,
-      nightEndHour: rule.nightEndHour,
-      validFrom: rule.validFrom,
-      validTo: rule.validTo,
-      updatedAt: rule.updatedAt,
-    },
+      distance: Number(distanceCost.toFixed(2)),
+      duration: Number(durationCost.toFixed(2)),
+      surge: Number((surged - subtotal).toFixed(2))
+    }
   }
 }
