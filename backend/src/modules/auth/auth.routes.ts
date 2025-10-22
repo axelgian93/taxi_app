@@ -1,75 +1,99 @@
-// src/modules/auth/auth.routes.ts
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import prisma from '../../lib/prisma'
 import bcrypt from 'bcrypt'
-import { prisma } from '../../lib/prisma'
 import { signJwt, verifyJwt } from '../../lib/jwt'
 
+const loginBodySchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', format: 'email' },
+    password: { type: 'string', minLength: 3 }
+  }
+} as const
+
+const userSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    email: { type: 'string' },
+    role: { type: 'string', enum: ['ADMIN', 'DRIVER', 'RIDER'] }
+  }
+} as const
+
+const loginResponseSchema = {
+  200: {
+    type: 'object',
+    properties: {
+      token: { type: 'string' },
+      user: userSchema
+    }
+  },
+  401: {
+    type: 'object',
+    properties: { error: { type: 'string' } }
+  }
+} as const
+
+const meResponseSchema = {
+  200: {
+    type: 'object',
+    properties: {
+      ok: { type: 'boolean' },
+      user: userSchema
+    }
+  },
+  401: {
+    type: 'object',
+    properties: { error: { type: 'string' } }
+  }
+} as const
+
 export default async function authRoutes(app: FastifyInstance) {
-  // Registro
-  app.post('/auth/register', async (req, reply) => {
-    const body = (req.body || {}) as {
-      email?: string
-      password?: string
-      firstName?: string
-      lastName?: string
-      role?: 'RIDER' | 'DRIVER'
-      licenseNumber?: string
+  app.post(
+    '/auth/login',
+    {
+      schema: {
+        tags: ['auth'],
+        body: loginBodySchema,
+        response: loginResponseSchema
+      }
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const { email, password } = (req.body || {}) as { email?: string; password?: string }
+      if (!email || !password) return reply.code(400).send({ error: 'email y password son requeridos' })
+
+      const user = await prisma.user.findUnique({ where: { email } })
+      if (!user) return reply.code(401).send({ error: 'Credenciales inválidas' })
+
+      const ok = await bcrypt.compare(password, user.passwordHash)
+      if (!ok) return reply.code(401).send({ error: 'Credenciales inválidas' })
+
+      const token = signJwt({ sub: user.id, email: user.email, role: user.role })
+      return reply.send({ token, user: { id: user.id, email: user.email, role: user.role } })
     }
-    const { email, password, firstName, lastName } = body
-    const role = body.role ?? 'RIDER'
-    if (!email || !password || !firstName || !lastName) {
-      return reply.code(400).send({ error: 'email, password, firstName, lastName son requeridos' })
+  )
+
+  app.get(
+    '/auth/me',
+    {
+      schema: {
+        tags: ['auth'],
+        security: [{ bearerAuth: [] }],
+        response: meResponseSchema
+      }
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const auth = req.headers.authorization || ''
+      const t = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+      if (!t) return reply.code(401).send({ error: 'Falta token' })
+
+      try {
+        const decoded = verifyJwt(t)
+        return reply.send({ ok: true, user: { id: decoded.sub, email: decoded.email, role: decoded.role } })
+      } catch {
+        return reply.code(401).send({ error: 'Token inválido' })
+      }
     }
-
-    const exists = await prisma.user.findUnique({ where: { email } })
-    if (exists) return reply.code(409).send({ error: 'Email ya registrado' })
-
-    const passwordHash = await bcrypt.hash(password, 10)
-    const user = await prisma.user.create({
-      data: { email, passwordHash, firstName, lastName, role },
-    })
-
-    if (role === 'DRIVER') {
-      await prisma.driverProfile.create({
-        data: {
-          userId: user.id,
-          licenseNumber: body.licenseNumber ?? `LIC-${user.id.substring(0, 6)}`,
-          status: 'OFFLINE',
-        },
-      })
-    } else {
-      await prisma.riderProfile.create({ data: { userId: user.id } })
-    }
-
-    const token = signJwt({ sub: user.id, email: user.email, role: user.role })
-    return reply.send({ token, user: { id: user.id, email: user.email, role: user.role } })
-  })
-
-  // Login
-  app.post('/auth/login', async (req, reply) => {
-    const { email, password } = (req.body || {}) as { email?: string; password?: string }
-    if (!email || !password) return reply.code(400).send({ error: 'email y password son requeridos' })
-
-    const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) return reply.code(401).send({ error: 'Credenciales inválidas' })
-
-    const ok = await bcrypt.compare(password, user.passwordHash)
-    if (!ok) return reply.code(401).send({ error: 'Credenciales inválidas' })
-
-    const token = signJwt({ sub: user.id, email: user.email, role: user.role })
-    return reply.send({ token, user: { id: user.id, email: user.email, role: user.role } })
-  })
-
-  // Perfil actual
-  app.get('/auth/me', async (req, reply) => {
-    const auth = req.headers.authorization
-    if (!auth?.toLowerCase().startsWith('bearer ')) return reply.code(401).send({ error: 'Missing token' })
-    const token = auth.slice(7)
-    try {
-      const payload = verifyJwt(token)
-      return reply.send({ user: { id: payload.sub, email: payload.email, role: payload.role } })
-    } catch {
-      return reply.code(401).send({ error: 'Invalid/expired token' })
-    }
-  })
+  )
 }

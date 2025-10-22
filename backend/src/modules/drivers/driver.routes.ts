@@ -1,35 +1,83 @@
-import { FastifyInstance } from 'fastify'
-import { upsertDriverLocation } from '../../services/driver.service'
-import { prisma } from '../../lib/prisma'
-import { authGuard } from '../../utils/authGuard'
+// src/modules/drivers/driver.routes.ts
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import prisma from '../../lib/prisma'
+
+const locationBody = {
+  type: 'object',
+  required: ['lat', 'lng'],
+  properties: {
+    lat: { type: 'number' },
+    lng: { type: 'number' }
+  }
+} as const
+
+const statusBody = {
+  type: 'object',
+  required: ['status'],
+  properties: {
+    status: { type: 'string', enum: ['OFFLINE', 'IDLE', 'ON_TRIP'] }
+  }
+} as const
 
 export default async function driverRoutes(app: FastifyInstance) {
-  // Driver reporta ubicación
-  app.post('/drivers/location', { preHandler: [authGuard(['DRIVER'])] }, async (req, reply) => {
-    const user = req.user!
-    const { lat, lng } = (req.body || {}) as { lat?: number; lng?: number }
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-      return reply.code(400).send({ error: 'lat y lng numéricos son requeridos' })
+  // Reportar ubicación
+  app.post(
+    '/drivers/location',
+    {
+      schema: {
+        tags: ['drivers'],
+        security: [{ bearerAuth: [] }],
+        body: locationBody,
+        response: {
+          200: { type: 'object', properties: { ok: { type: 'boolean' } } }
+        }
+      }
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const driverId = (req.headers['x-user-id'] as string) || (req as any).userId
+      const body = req.body as { lat: number; lng: number }
+
+      // Solo actualizamos el status; evitamos lastLat/lastLng porque no existen en DriverProfile
+      await prisma.driverProfile.updateMany({
+        where: { userId: driverId },
+        data: { status: 'IDLE' as any }
+      })
+
+      // Guardamos la ubicación en el historial
+      const dp = await prisma.driverProfile.findFirst({ where: { userId: driverId } })
+      if (dp) {
+        await prisma.driverLocationHistory.create({
+          data: { driverId: dp.id, lat: body.lat as any, lng: body.lng as any }
+        })
+      }
+
+      return reply.send({ ok: true })
     }
-    try {
-      const updated = await upsertDriverLocation(user.id, lat, lng)
-      return reply.send({ ok: true, driver: { id: updated.id, status: updated.status } })
-    } catch (e: any) {
-      return reply.code(400).send({ error: e.message })
-    }
-  })
+  )
 
   // Cambiar status
-  app.post('/drivers/status', { preHandler: [authGuard(['DRIVER'])] }, async (req, reply) => {
-    const user = req.user!
-    const { status } = (req.body || {}) as { status?: 'OFFLINE' | 'IDLE' | 'ON_TRIP' | 'SUSPENDED' }
-    if (!status) return reply.code(400).send({ error: 'status requerido' })
+  app.post(
+    '/drivers/status',
+    {
+      schema: {
+        tags: ['drivers'],
+        security: [{ bearerAuth: [] }],
+        body: statusBody,
+        response: {
+          200: { type: 'object', properties: { ok: { type: 'boolean' }, status: { type: 'string' } } }
+        }
+      }
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const driverId = (req.headers['x-user-id'] as string) || (req as any).userId
+      const body = req.body as { status: 'OFFLINE' | 'IDLE' | 'ON_TRIP' }
 
-    const dp = await prisma.driverProfile.update({
-      where: { userId: user.id },
-      data: { status },
-      select: { id: true, status: true },
-    })
-    return reply.send({ ok: true, driver: dp })
-  })
+      await prisma.driverProfile.updateMany({
+        where: { userId: driverId },
+        data: { status: body.status as any }
+      })
+
+      return reply.send({ ok: true, status: body.status })
+    }
+  )
 }

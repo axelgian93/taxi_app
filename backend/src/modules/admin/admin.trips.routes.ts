@@ -1,39 +1,60 @@
-import { FastifyInstance } from 'fastify'
-import { prisma } from '../../lib/prisma'
-import { authGuard } from '../../utils/authGuard'
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+import prisma from '../../lib/prisma'
+
+const listQuery = {
+  type: 'object',
+  properties: {
+    limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 },
+    cursor: { type: 'string' }
+  }
+} as const
+
+const tripItem = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    status: { type: 'string' },
+    riderId: { type: 'string' },
+    driverId: { type: 'string' },
+    requestedAt: { type: 'string', format: 'date-time' },
+    completedAt: { type: 'string', format: 'date-time', nullable: true },
+    costUsd: { type: 'number' },
+    currency: { type: 'string' }
+  }
+} as const
 
 export default async function adminTripsRoutes(app: FastifyInstance) {
-  app.get('/admin/trips', { preHandler: [authGuard(['ADMIN'])] }, async (req, reply) => {
-    const q = req.query as any
-    const page = Math.max(1, Number(q.page ?? 1))
-    const pageSize = Math.min(100, Math.max(1, Number(q.pageSize ?? 20)))
-
-    const where: any = {}
-    if (q.status) where.status = q.status
-    if (q.riderId) where.riderId = q.riderId
-    if (q.driverId) where.driverId = q.driverId
-    if (q.dateFrom || q.dateTo) {
-      where.requestedAt = {}
-      if (q.dateFrom) where.requestedAt.gte = new Date(q.dateFrom)
-      if (q.dateTo) where.requestedAt.lte = new Date(q.dateTo)
-    }
-
-    const [items, total] = await Promise.all([
-      prisma.trip.findMany({
-        where,
+  app.get(
+    '/admin/trips',
+    {
+      schema: {
+        tags: ['admin'],
+        security: [{ bearerAuth: [] }],
+        querystring: listQuery,
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              items: { type: 'array', items: tripItem },
+              nextCursor: { type: 'string', nullable: true }
+            }
+          }
+        }
+      }
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
+      const { limit = 50, cursor } = req.query as { limit?: number; cursor?: string }
+      const items = await prisma.trip.findMany({
+        take: limit,
+        ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
         orderBy: { requestedAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-        include: {
-          rider: { select: { firstName: true, lastName: true, email: true } },
-          driver: { select: { firstName: true, lastName: true, email: true } },
-          vehicle: { select: { plate: true, brand: true, model: true } },
-          payment: true,
-        },
-      }),
-      prisma.trip.count({ where }),
-    ])
-
-    return reply.send({ page, pageSize, total, items })
-  })
+        select: {
+          id: true, status: true, riderId: true, driverId: true,
+          requestedAt: true, completedAt: true, costUsd: true, currency: true
+        }
+      })
+      const nextCursor = items.length === limit ? items[items.length - 1].id : null
+      return reply.send({ items, nextCursor })
+    }
+  )
 }
