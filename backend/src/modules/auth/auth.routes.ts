@@ -1,72 +1,171 @@
-// src/modules/auth/auth.routes.ts
 import { FastifyInstance } from 'fastify'
-import { z } from 'zod'
 import prisma from '../../lib/prisma'
 import bcrypt from 'bcrypt'
 import { signJwt, verifyJwt } from '../../lib/jwt'
-import { Role } from '@prisma/client' // 👈 usamos el enum de Prisma
 
-// --- Schemas Zod ---
-const loginSchema = {
-  tags: ['auth'],
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(4)
-  }),
-  response: {
-    200: z.object({
-      token: z.string(),
-      user: z.object({
-        id: z.string(),
-        email: z.string().email(),
-        role: z.enum(['ADMIN', 'DRIVER', 'RIDER'])
-      })
-    }),
-    401: z.object({ error: z.string() }).describe('Credenciales inválidas')
+// ---------- Schemas comunes ----------
+const userSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    email: { type: 'string' },
+    role: { type: 'string', enum: ['ADMIN', 'DRIVER', 'RIDER'] }
   }
 } as const
 
-const registerSchema = {
-  tags: ['auth'],
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    // Solo permitimos crear DRIVER o RIDER desde este endpoint de pruebas
-    role: z.enum(['DRIVER', 'RIDER']).default('RIDER')
-  }),
-  response: {
-    201: z.object({
-      id: z.string(),
-      email: z.string().email(),
-      role: z.enum(['ADMIN', 'DRIVER', 'RIDER'])
-    }),
-    400: z.object({ error: z.string() }).describe('Usuario ya existe')
+// ---------- /auth/register ----------
+const registerBodySchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', format: 'email' },
+    password: { type: 'string', minLength: 6, description: 'mínimo 6 caracteres' },
+    role: { type: 'string', enum: ['RIDER', 'DRIVER'], default: 'RIDER' },
+    firstName: { type: 'string' },
+    lastName: { type: 'string' }
+  },
+  additionalProperties: false
+} as const
+
+const registerResponseSchema = {
+  201: {
+    type: 'object',
+    properties: {
+      token: { type: 'string' },
+      user: userSchema
+    }
+  },
+  400: { type: 'object', properties: { error: { type: 'string' } } },
+  409: { type: 'object', properties: { error: { type: 'string' } } }
+} as const
+
+// ---------- /auth/login ----------
+const loginBodySchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', format: 'email' },
+    password: { type: 'string', minLength: 3 }
+  },
+  additionalProperties: false
+} as const
+
+const loginResponseSchema = {
+  200: {
+    type: 'object',
+    properties: {
+      token: { type: 'string' },
+      user: userSchema
+    }
+  },
+  400: { type: 'object', properties: { error: { type: 'string' } } },
+  401: {
+    type: 'object',
+    properties: { error: { type: 'string' } }
   }
 } as const
 
-const meSchema = {
-  tags: ['auth'],
-  security: [{ bearerAuth: [] }],
-  response: {
-    200: z.object({
-      ok: z.literal(true),
-      user: z.object({
-        id: z.string(),
-        email: z.string().email(),
-        role: z.enum(['ADMIN', 'DRIVER', 'RIDER'])
-      })
-    }),
-    401: z.object({ error: z.string() })
+// ---------- /auth/me ----------
+const meResponseSchema = {
+  200: {
+    type: 'object',
+    properties: {
+      ok: { type: 'boolean' },
+      user: userSchema
+    }
+  },
+  401: {
+    type: 'object',
+    properties: { error: { type: 'string' } }
   }
 } as const
 
 export default async function authRoutes(app: FastifyInstance) {
+  // POST /auth/register
+  app.post(
+    '/auth/register',
+    {
+      schema: {
+        tags: ['auth'],
+        description: 'Crea un usuario (RIDER o DRIVER) y devuelve JWT',
+        body: registerBodySchema,
+        response: registerResponseSchema
+      }
+    },
+    async (req, reply) => {
+      const { email, password, role = 'RIDER', firstName, lastName } = (req.body || {}) as {
+        email?: string
+        password?: string
+        role?: 'RIDER' | 'DRIVER'
+        firstName?: string
+        lastName?: string
+      }
+
+      if (!email || !password) {
+        return reply.code(400).send({ error: 'email y password son requeridos' })
+      }
+
+      const exists = await prisma.user.findUnique({ where: { email } })
+      if (exists) {
+        return reply.code(409).send({ error: 'Email ya registrado' })
+      }
+
+      const hash = await bcrypt.hash(password, 10)
+
+      // Creamos user básico; ADMIN no se permite por aquí
+      const user = await prisma.user.create({
+        data: {
+          email,
+          passwordHash: hash,
+          firstName: (firstName ?? null) as any,
+          lastName: (lastName ?? null) as any,
+          role: role as any,
+          isActive: true
+        }
+      })
+
+      // Si registró como DRIVER, aseguramos su DriverProfile (licenseNumber es obligatorio)
+      if (role === 'DRIVER') {
+        await prisma.driverProfile.upsert({
+          where: { userId: user.id },
+          update: {},
+          create: {
+            userId: user.id,
+            rating: 5.0,
+            totalTrips: 0,
+            status: 'OFFLINE' as any,
+            licenseNumber: 'PENDING' // <- requerido por tu schema
+          }
+        })
+      }
+
+      // Si registró como RIDER, aseguramos su RiderProfile
+      if (role === 'RIDER') {
+        await prisma.riderProfile.upsert({
+          where: { userId: user.id },
+          update: {},
+          create: { userId: user.id }
+        })
+      }
+
+      const token = signJwt({ sub: user.id, email: user.email, role: user.role })
+      return reply.code(201).send({ token, user: { id: user.id, email: user.email, role: user.role } })
+    }
+  )
+
   // POST /auth/login
   app.post(
     '/auth/login',
-    { schema: loginSchema },
+    {
+      schema: {
+        tags: ['auth'],
+        body: loginBodySchema,
+        response: loginResponseSchema
+      }
+    },
     async (req, reply) => {
-      const { email, password } = req.body as z.infer<typeof loginSchema.body>
+      const { email, password } = (req.body || {}) as { email?: string; password?: string }
+      if (!email || !password) return reply.code(400).send({ error: 'email y password son requeridos' })
 
       const user = await prisma.user.findUnique({ where: { email } })
       if (!user) return reply.code(401).send({ error: 'Credenciales inválidas' })
@@ -75,48 +174,30 @@ export default async function authRoutes(app: FastifyInstance) {
       if (!ok) return reply.code(401).send({ error: 'Credenciales inválidas' })
 
       const token = signJwt({ sub: user.id, email: user.email, role: user.role })
-      return reply.send({
-        token,
-        user: { id: user.id, email: user.email, role: user.role }
-      })
+      return reply.send({ token, user: { id: user.id, email: user.email, role: user.role } })
     }
   )
 
-  // POST /auth/register  (opcional, útil para pruebas)
-  app.post(
-    '/auth/register',
-    { schema: registerSchema },
-    async (req, reply) => {
-      const { email, password, role } = req.body as z.infer<typeof registerSchema.body>
-
-      const exists = await prisma.user.findUnique({ where: { email } })
-      if (exists) return reply.code(400).send({ error: 'Ya existe un usuario con ese email' })
-
-      const hash = await bcrypt.hash(password, 10)
-
-      // 👇 Cast explícito al enum de Prisma
-      const created = await prisma.user.create({
-        data: { email, passwordHash: hash, role: role as Role }
-      })
-
-      return reply.code(201).send({ id: created.id, email: created.email, role: created.role })
-    }
-  )
-
-  // GET /auth/me  (decodifica el JWT del Authorization Bearer)
+  // GET /auth/me
   app.get(
     '/auth/me',
-    { schema: meSchema },
+    {
+      schema: {
+        tags: ['auth'],
+        security: [{ bearerAuth: [] }],
+        response: meResponseSchema
+      }
+    },
     async (req, reply) => {
       const auth = req.headers.authorization || ''
-      const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-      if (!token) return reply.code(401).send({ error: 'Falta token' })
+      const t = auth.startsWith('Bearer ') ? auth.slice(7) : ''
+      if (!t) return reply.code(401).send({ error: 'Falta token' })
 
       try {
-        const decoded = verifyJwt(token) as { sub: string; email: string; role: 'ADMIN' | 'DRIVER' | 'RIDER' }
+        const decoded = verifyJwt(t)
         return reply.send({ ok: true, user: { id: decoded.sub, email: decoded.email, role: decoded.role } })
       } catch {
-        return reply.code(401).send({ error: 'Token inválido o expirado' })
+        return reply.code(401).send({ error: 'Token inválido' })
       }
     }
   )
