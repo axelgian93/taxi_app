@@ -58,6 +58,10 @@ services:
     env_file:
       - ./backend/.env.dev.docker   # si no lo tienes, usa .env.docker
     environment:
+      # Asegura instalación de devDependencies dentro del contenedor
+      NODE_ENV: development
+      NPM_CONFIG_PRODUCTION: "false"
+      # Hot reload estable en Windows
       CHOKIDAR_USEPOLLING: "1"      # necesario para hot-reload en Windows
     command: >
       sh -c "
