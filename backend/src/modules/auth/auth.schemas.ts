@@ -1,34 +1,45 @@
 // src/modules/auth/auth.schemas.ts
-import { z } from 'zod'
+export const registerBodySchema = {
+  type: 'object',
+  required: ['email', 'password', 'firstName', 'lastName', 'role'],
+  properties: {
+    email: { type: 'string', format: 'email', example: 'rider@taxi.local' },
+    password: { type: 'string', minLength: 6, example: '123456' },
+    firstName: { type: 'string', example: 'Ada' },
+    lastName: { type: 'string', example: 'Lovelace' },
+    role: { type: 'string', enum: ['RIDER', 'DRIVER'] }
+  }
+} as const
 
-export const loginSchema = {
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(4),
-  }),
-  response: {
-    200: z.object({
-      token: z.string(),
-      user: z.object({
-        id: z.string(),
-        email: z.string(),
-        role: z.enum(['ADMIN', 'DRIVER', 'RIDER']),
-      }),
-    }),
-  },
-}
+export const loginBodySchema = {
+  type: 'object',
+  required: ['email', 'password'],
+  properties: {
+    email: { type: 'string', format: 'email', example: 'rider@taxi.local' },
+    password: { type: 'string', example: '123456' }
+  }
+} as const
 
-export const registerSchema = {
-  body: z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(['DRIVER', 'RIDER']),
-  }),
-  response: {
-    201: z.object({
-      id: z.string(),
-      email: z.string(),
-      role: z.string(),
-    }),
-  },
-}
+export const userSchema = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    email: { type: 'string' },
+    role: { type: 'string', enum: ['ADMIN', 'DRIVER', 'RIDER'] }
+  }
+} as const
+
+export const loginResponseSchema = {
+  type: 'object',
+  properties: {
+    token: { type: 'string' },
+    user: userSchema
+  }
+} as const
+
+export const errorResponse = {
+  type: 'object',
+  properties: {
+    error: { type: 'string' }
+  }
+} as const
