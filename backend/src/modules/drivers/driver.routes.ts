@@ -1,7 +1,7 @@
 // src/modules/drivers/driver.routes.ts
 import type { FastifyInstance } from 'fastify'
 import prisma from '../../lib/prisma'
-import { DriverStatus, Prisma } from '@prisma/client'
+import { DriverStatus } from '@prisma/client'
 
 type BodyReport = {
   lat?: number
@@ -9,23 +9,37 @@ type BodyReport = {
   status?: DriverStatus
 }
 
-// Helper simple para sacar el userId (JWT o header dev)
-function getUserId(req: any): string | undefined {
-  const fromJwt = req?.user?.id as string | undefined
-  const fromHeader = (req.headers?.['x-user-id'] ??
-    req.headers?.['x-userid']) as string | undefined
-  return fromJwt || fromHeader
+// Extrae userId desde x-user-id o verificando el Bearer token
+async function getUserId(app: FastifyInstance, req: any): Promise<string | undefined> {
+  // 1) Header directo (útil en pruebas manuales)
+  const fromHeader = (req.headers?.['x-user-id'] as string | undefined)?.trim()
+  if (fromHeader) return fromHeader
+
+  // 2) Bearer token (lo que usa tu smoke-e2e)
+  const auth = (req.headers?.authorization as string | undefined) || ''
+  const m = auth.match(/^Bearer\s+(.+)$/i)
+  if (!m) return undefined
+
+  // Si registraste @fastify/jwt, úsalo para verificar
+  try {
+    // @ts-ignore - fastify-jwt añade .jwt al server
+    const decoded = await app.jwt?.verify(m[1])
+    const sub = (decoded as any)?.sub
+    if (typeof sub === 'string' && sub) return sub
+  } catch {
+    // ignore: retornaremos undefined -> 401
+  }
+  return undefined
 }
 
-// Handler principal (lo referenciamos desde la ruta)
 async function handleReport(app: FastifyInstance, req: any, reply: any) {
-  const userId = getUserId(req)
+  const userId = await getUserId(app, req)
   if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
 
   const body = (req.body || {}) as BodyReport
   const status = (body.status ?? 'IDLE') as DriverStatus
 
-  // Aseguramos que exista el perfil del driver
+  // Aseguramos que exista el DriverProfile
   const driverProfile = await prisma.driverProfile.upsert({
     where: { userId },
     update: {},
@@ -33,8 +47,7 @@ async function handleReport(app: FastifyInstance, req: any, reply: any) {
       userId,
       rating: 5.0,
       totalTrips: 0,
-      status: 'IDLE', // valor por defecto
-      // este campo es requerido en tu schema
+      status: 'IDLE',
       licenseNumber: 'PENDING',
     },
   })
@@ -50,17 +63,17 @@ async function handleReport(app: FastifyInstance, req: any, reply: any) {
     })
   }
 
-  // Cambiamos status del driver
+  // Actualizamos status (enum -> usar set)
   await prisma.driverProfile.update({
     where: { id: driverProfile.id },
-    data: { status: { set: status as DriverStatus } }, // <- enum con set
+    data: { status: { set: status } },
   })
 
   return reply.send({ ok: true })
 }
 
 export default async function driverRoutes(app: FastifyInstance) {
-  // Esquema para Swagger / validación
+  // Esquema simple para Swagger
   const bodySchema = {
     type: 'object',
     properties: {
@@ -76,18 +89,20 @@ export default async function driverRoutes(app: FastifyInstance) {
   } as const
 
   const responseOk = {
-    200: {
-      type: 'object',
-      properties: { ok: { type: 'boolean' } },
-    },
+    200: { type: 'object', properties: { ok: { type: 'boolean' } } },
   } as const
 
-  app.post('/drivers/status', {
-    schema: {
-      tags: ['drivers'],
-      body: bodySchema,
-      response: responseOk,
-      summary: 'Driver reporta su estado y (opcional) ubicación',
-    },
-  }, (req, reply) => handleReport(app, req, reply))
+  // /drivers/status (original)
+  app.post(
+    '/drivers/status',
+    { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } },
+    (req, reply) => handleReport(app, req, reply),
+  )
+
+  // /drivers/location (alias que usa el smoke)
+  app.post(
+    '/drivers/location',
+    { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } },
+    (req, reply) => handleReport(app, req, reply),
+  )
 }
