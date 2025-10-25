@@ -7,9 +7,10 @@ import swaggerUi from '@fastify/swagger-ui'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 
-// 👇 AÑADIDO: plugin JWT
+// 🔐 plugin JWT
 import jwtPlugin from './plugins/jwt'
 
+// Rutas
 import authRoutes from './modules/auth/auth.routes'
 import driverRoutes from './modules/drivers/driver.routes'
 import tripRoutes from './modules/trips/trip.routes'
@@ -30,22 +31,14 @@ const RL_WIN = process.env.RATE_LIMIT_TIME_WINDOW || '1 minute'
 
 async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
-    ajv: {
-      // Permitimos 'example' y apagamos 'strict' para evitar errores por keywords desconocidas
-      customOptions: { keywords: ['example'], strict: false }
-    },
+    ajv: { customOptions: { keywords: ['example'], strict: false } },
     trustProxy: true,
-    logger: {
-      transport: NODE_ENV !== 'production'
-        ? { target: 'pino-pretty', options: { colorize: true } }
-        : undefined
-    }
+    logger: NODE_ENV !== 'production'
+      ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
+      : true
   })
 
-  // CORS
   await app.register(cors, { origin: parseCorsOrigin(), credentials: true })
-
-  // Swagger
   await app.register(swagger, {
     openapi: {
       openapi: '3.1.0',
@@ -55,16 +48,13 @@ async function buildServer(): Promise<FastifyInstance> {
     }
   })
   await app.register(swaggerUi, { routePrefix: '/docs', uiConfig: { docExpansion: 'list', deepLinking: true } })
-
-  // Seguridad y rate limit
   await app.register(helmet, { contentSecurityPolicy: false })
   await app.register(rateLimit, { max: RL_MAX, timeWindow: RL_WIN })
 
-  // 👇 AÑADIDO: registrar JWT ANTES de las rutas
-  await app.register(jwtPlugin)
-
-  // Health
   app.get('/healthz', async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
+
+  // 🔐 JWT ANTES de registrar rutas
+  await app.register(jwtPlugin)
 
   // Rutas
   await app.register(authRoutes)
