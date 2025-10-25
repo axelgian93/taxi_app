@@ -1,15 +1,49 @@
-import { FastifyInstance } from 'fastify'
+﻿// src/modules/auth/auth.routes.ts
+import type { FastifyInstance } from 'fastify'
 import bcrypt from 'bcrypt'
 import prisma from '../../lib/prisma'
-import { signJwt } from '../../lib/jwt'
-import {
-  loginBodySchema,
-  loginResponseSchema,
-  registerBodySchema,
-  errorResponse
-} from './auth.schemas'
+type Role = 'ADMIN' | 'DRIVER' | 'RIDER'
 
 export default async function authRoutes(app: FastifyInstance) {
+  // Schemas (Swagger + validaciÃ³n)
+  const registerBodySchema = {
+    type: 'object',
+    required: ['email', 'password', 'firstName', 'lastName', 'role'],
+    properties: {
+      email:     { type: 'string', format: 'email', example: 'driver@taxi.local' },
+      password:  { type: 'string', minLength: 6, example: '123456' },
+      firstName: { type: 'string', example: 'John' },
+      lastName:  { type: 'string', example: 'Doe' },
+      role:      { type: 'string', enum: ['ADMIN', 'DRIVER', 'RIDER'], example: 'DRIVER' }
+    },
+    additionalProperties: false
+  } as const
+
+  const loginBodySchema = {
+    type: 'object',
+    required: ['email', 'password'],
+    properties: {
+      email:    { type: 'string', format: 'email', example: 'driver@taxi.local' },
+      password: { type: 'string', minLength: 6, example: '123456' }
+    },
+    additionalProperties: false
+  } as const
+
+  const loginResponseSchema = {
+    type: 'object',
+    properties: {
+      token: { type: 'string' },
+      user: {
+        type: 'object',
+        properties: {
+          id:    { type: 'string' },
+          email: { type: 'string' },
+          role:  { type: 'string', enum: ['ADMIN', 'DRIVER', 'RIDER'] }
+        }
+      }
+    }
+  } as const
+
   // POST /auth/register
   app.post('/auth/register', {
     schema: {
@@ -17,37 +51,55 @@ export default async function authRoutes(app: FastifyInstance) {
       body: registerBodySchema,
       response: {
         201: loginResponseSchema,
-        400: errorResponse,
-        409: errorResponse
+        400: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req, reply) => {
-    const { email, password, firstName, lastName, role } = req.body as any
+    const { email, password, firstName, lastName, role } = req.body as {
+      email: string; password: string; firstName: string; lastName: string; role: Role
+    }
 
     const exists = await prisma.user.findUnique({ where: { email } })
-    if (exists) return reply.code(409).send({ error: 'Email ya registrado' })
+    if (exists) return reply.code(400).send({ error: 'Email ya registrado' })
 
-    const hash = await bcrypt.hash(password, 10)
+    const passwordHash = await bcrypt.hash(password, 10)
+
     const user = await prisma.user.create({
-      data: { email, passwordHash: hash, firstName, lastName, role }
+      data: { email, passwordHash, firstName, lastName, role }
     })
 
     if (role === 'DRIVER') {
       await prisma.driverProfile.upsert({
-        where: { userId: user.id },
+        where:  { userId: user.id },
         update: {},
-        create: { userId: user.id, rating: 5, totalTrips: 0, status: 'IDLE' }
+        create: {
+          userId: user.id,
+          rating: 5.0,
+          totalTrips: 0,
+          status: 'IDLE', // enum vÃ¡lido
+          licenseNumber: 'PENDING'          // requerido por tu schema
+        }
       })
-    } else if (role === 'RIDER') {
+    }
+
+    if (role === 'RIDER') {
       await prisma.riderProfile.upsert({
-        where: { userId: user.id },
+        where:  { userId: user.id },
         update: {},
         create: { userId: user.id }
       })
     }
 
-    const token = signJwt({ sub: user.id, email: user.email, role: user.role })
-    return reply.code(201).send({ token, user: { id: user.id, email: user.email, role: user.role } })
+    const token = (app as any).jwt.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    })
+
+    return reply.code(201).send({
+      token,
+      user: { id: user.id, email: user.email, role: user.role }
+    })
   })
 
   // POST /auth/login
@@ -57,21 +109,43 @@ export default async function authRoutes(app: FastifyInstance) {
       body: loginBodySchema,
       response: {
         200: loginResponseSchema,
-        400: errorResponse,
-        401: errorResponse
+        401: { type: 'object', properties: { error: { type: 'string' } } }
       }
     }
   }, async (req, reply) => {
-    const { email, password } = (req.body || {}) as { email?: string; password?: string }
-    if (!email || !password) return reply.code(400).send({ error: 'email y password son requeridos' })
+    const { email, password } = req.body as { email: string; password: string }
 
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user) return reply.code(401).send({ error: 'Credenciales inválidas' })
+    if (!user) return reply.code(401).send({ error: 'Credenciales invÃ¡lidas' })
 
     const ok = await bcrypt.compare(password, user.passwordHash)
-    if (!ok) return reply.code(401).send({ error: 'Credenciales inválidas' })
+    if (!ok) return reply.code(401).send({ error: 'Credenciales invÃ¡lidas' })
 
-    const token = signJwt({ sub: user.id, email: user.email, role: user.role })
-    return reply.send({ token, user: { id: user.id, email: user.email, role: user.role } })
+    const token = (app as any).jwt.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role
+    })
+
+    return reply.send({
+      token,
+      user: { id: user.id, email: user.email, role: user.role }
+    })
+  })
+
+  // GET /auth/me
+  app.get('/auth/me', { schema: { tags: ['auth'] } }, async (req: any, reply) => {
+    try {
+      await req.jwtVerify()
+    } catch {
+      return reply.code(401).send({ error: 'Unauthorized' })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.sub as string },
+      select: { id: true, email: true, role: true, firstName: true, lastName: true }
+    })
+
+    return reply.send({ user })
   })
 }
