@@ -18,6 +18,7 @@ const auth_routes_1 = __importDefault(require("./modules/auth/auth.routes"));
 const driver_routes_1 = __importDefault(require("./modules/drivers/driver.routes"));
 const trip_routes_1 = __importDefault(require("./modules/trips/trip.routes"));
 const admin_trips_routes_1 = __importDefault(require("./modules/admin/admin.trips.routes"));
+const user_routes_1 = __importDefault(require("./modules/users/user.routes"));
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 function parseCorsOrigin() {
@@ -58,6 +59,7 @@ async function buildServer() {
     await app.register(driver_routes_1.default);
     await app.register(trip_routes_1.default);
     await app.register(admin_trips_routes_1.default);
+    await app.register(user_routes_1.default);
     return app;
 }
 async function main() {

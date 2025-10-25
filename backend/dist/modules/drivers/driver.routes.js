@@ -47,7 +47,7 @@ async function handleReport(app, req, reply) {
             rating: 5.0,
             totalTrips: 0,
             status: 'IDLE',
-            licenseNumber: "PENDING-{userId}",
+            licenseNumber: `PENDING-${userId}`,
         },
     });
     // Si vinieron coordenadas, guardamos histÃ³rico

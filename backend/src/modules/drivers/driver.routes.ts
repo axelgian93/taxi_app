@@ -50,7 +50,7 @@ async function handleReport(app: FastifyInstance, req: any, reply: any) {
       rating: 5.0,
       totalTrips: 0,
       status: 'IDLE',
-      licenseNumber: "PENDING-{userId}",
+      licenseNumber: `PENDING-${userId}`,
     },
   })
 

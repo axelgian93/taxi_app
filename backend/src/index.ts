@@ -15,6 +15,7 @@ import authRoutes from './modules/auth/auth.routes'
 import driverRoutes from './modules/drivers/driver.routes'
 import tripRoutes from './modules/trips/trip.routes'
 import adminTripsRoutes from './modules/admin/admin.trips.routes'
+import userRoutes from './modules/users/user.routes'
 
 const PORT = Number(process.env.PORT || 8080)
 const NODE_ENV = process.env.NODE_ENV || 'development'
@@ -62,6 +63,7 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(driverRoutes)
   await app.register(tripRoutes)
   await app.register(adminTripsRoutes)
+  await app.register(userRoutes)
 
   return app
 }

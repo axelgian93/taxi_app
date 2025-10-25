@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify'
 import prisma from '../../lib/prisma'
 import { computeFare } from '../../services/pricing.service'
 import { haversineKm } from '../../utils/geo'
+import { sendPushToUser } from '../../services/push.service'
 
 function fail(reply: any, code: number, msg: string) {
   return reply.code(code).send({ error: msg })
@@ -250,6 +251,12 @@ export default async function tripRoutes(app: FastifyInstance) {
 
       const city = (b?.city as string) || 'Guayaquil'
       const pricing = await computeFare({ city, distanceKm: distKm, durationMin: durMin, requestedAt: new Date() })
+      // Notificar al driver asignado
+      await sendPushToUser(chosen.userId, {
+        title: 'Nueva solicitud de viaje',
+        body: 'Tienes un viaje asignado',
+        data: { tripId: trip.id, type: 'ASSIGNED' },
+      })
       return reply.send({ ok: true, trip, pricing })
     }
   )
@@ -303,6 +310,12 @@ export default async function tripRoutes(app: FastifyInstance) {
       if (trip.driverId !== driverId) return fail(reply, 403, 'Forbidden')
       if (trip.status !== 'ASSIGNED') return fail(reply, 400, 'Estado inválido para aceptar')
       await prisma.trip.update({ where: { id }, data: { status: 'ACCEPTED', acceptedAt: new Date() } })
+      // Notificar al rider que el driver aceptó
+      await sendPushToUser(trip.riderId, {
+        title: 'Conductor aceptó tu viaje',
+        body: 'Tu viaje fue aceptado',
+        data: { tripId: trip.id, type: 'ACCEPTED' },
+      })
       return reply.send({ ok: true })
     }
   )
@@ -319,6 +332,11 @@ export default async function tripRoutes(app: FastifyInstance) {
       if (trip.driverId !== driverId) return fail(reply, 403, 'Forbidden')
       if (trip.status !== 'ACCEPTED') return fail(reply, 400, 'Estado inválido para llegar')
       await prisma.trip.update({ where: { id }, data: { status: 'ARRIVED', arrivedAt: new Date() } })
+      await sendPushToUser(trip.riderId, {
+        title: 'Conductor ha llegado',
+        body: 'Tu conductor está en el punto de recogida',
+        data: { tripId: trip.id, type: 'ARRIVED' },
+      })
       return reply.send({ ok: true })
     }
   )
@@ -335,6 +353,11 @@ export default async function tripRoutes(app: FastifyInstance) {
       if (trip.driverId !== driverId) return fail(reply, 403, 'Forbidden')
       if (trip.status !== 'ARRIVED') return fail(reply, 400, 'Estado inválido para iniciar')
       await prisma.trip.update({ where: { id }, data: { status: 'STARTED', startedAt: new Date() } })
+      await sendPushToUser(trip.riderId, {
+        title: 'Viaje iniciado',
+        body: 'Tu viaje ha comenzado',
+        data: { tripId: trip.id, type: 'STARTED' },
+      })
       return reply.send({ ok: true })
     }
   )
@@ -371,6 +394,11 @@ export default async function tripRoutes(app: FastifyInstance) {
           pricingSnapshot: { city, pricing } as any,
         },
         select: { id: true, status: true },
+      })
+      await sendPushToUser(trip.riderId, {
+        title: 'Viaje completado',
+        body: `Total: $${pricing.totalUsd.toFixed(2)}`,
+        data: { tripId: trip.id, type: 'COMPLETED' },
       })
       return reply.send({ ok: true, trip: updated, pricing })
     }
