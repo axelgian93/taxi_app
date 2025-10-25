@@ -47,6 +47,7 @@ async function authRoutes(app) {
     app.post('/auth/register', {
         schema: {
             tags: ['auth'],
+            security: [],
             body: registerBodySchema,
             response: {
                 201: loginResponseSchema,
@@ -71,7 +72,7 @@ async function authRoutes(app) {
                     rating: 5.0,
                     totalTrips: 0,
                     status: 'IDLE', // enum vÃ¡lido
-                    licenseNumber: 'PENDING' // requerido por tu schema
+                    licenseNumber: "PENDING-{user.id}" // requerido por tu schema
                 }
             });
         }
@@ -82,11 +83,7 @@ async function authRoutes(app) {
                 create: { userId: user.id }
             });
         }
-        const token = app.jwt.sign({
-            sub: user.id,
-            email: user.email,
-            role: user.role
-        });
+        const token = app.jwt.sign({ id: user.id, email: user.email, role: user.role });
         return reply.code(201).send({
             token,
             user: { id: user.id, email: user.email, role: user.role }
@@ -96,6 +93,7 @@ async function authRoutes(app) {
     app.post('/auth/login', {
         schema: {
             tags: ['auth'],
+            security: [],
             body: loginBodySchema,
             response: {
                 200: loginResponseSchema,
@@ -110,11 +108,7 @@ async function authRoutes(app) {
         const ok = await bcrypt_1.default.compare(password, user.passwordHash);
         if (!ok)
             return reply.code(401).send({ error: 'Credenciales invÃ¡lidas' });
-        const token = app.jwt.sign({
-            sub: user.id,
-            email: user.email,
-            role: user.role
-        });
+        const token = app.jwt.sign({ id: user.id, email: user.email, role: user.role });
         return reply.send({
             token,
             user: { id: user.id, email: user.email, role: user.role }
@@ -129,7 +123,7 @@ async function authRoutes(app) {
             return reply.code(401).send({ error: 'Unauthorized' });
         }
         const user = await prisma_1.default.user.findUnique({
-            where: { id: req.user.sub },
+            where: { id: req.user.id },
             select: { id: true, email: true, role: true, firstName: true, lastName: true }
         });
         return reply.send({ user });

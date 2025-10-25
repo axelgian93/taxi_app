@@ -44,14 +44,15 @@ async function buildServer(): Promise<FastifyInstance> {
       openapi: '3.1.0',
       info: { title: 'Taxi API', description: 'API de Taxi', version: '1.0.0' },
       servers: [{ url: `http://localhost:${PORT}` }],
-      components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } }
+      components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer' } } },
+      security: [{ bearerAuth: [] }]
     }
   })
   await app.register(swaggerUi, { routePrefix: '/docs', uiConfig: { docExpansion: 'list', deepLinking: true } })
   await app.register(helmet, { contentSecurityPolicy: false })
   await app.register(rateLimit, { max: RL_MAX, timeWindow: RL_WIN })
 
-  app.get('/healthz', async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
+  app.get('/healthz', { schema: { security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
 
   // 🔐 JWT ANTES de registrar rutas
   await app.register(jwtPlugin)

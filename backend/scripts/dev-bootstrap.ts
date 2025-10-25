@@ -1,6 +1,6 @@
 // scripts/dev-bootstrap.ts
 import 'dotenv/config'
-import { PrismaClient, Role, DriverStatus, VehicleType } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
@@ -21,7 +21,7 @@ async function main() {
       passwordHash: hash,
       firstName: 'Admin',
       lastName: 'Root',
-      role: Role.ADMIN,
+      role: 'ADMIN',
       isActive: true,
     },
   })
@@ -36,7 +36,7 @@ async function main() {
       passwordHash: hash,
       firstName: 'Driver',
       lastName: 'Demo',
-      role: Role.DRIVER,
+      role: 'DRIVER',
       isActive: true,
     },
   })
@@ -51,7 +51,7 @@ async function main() {
       passwordHash: hash,
       firstName: 'Rider',
       lastName: 'Demo',
-      role: Role.RIDER,
+      role: 'RIDER',
       isActive: true,
     },
   })
@@ -64,7 +64,7 @@ async function main() {
       id: 'dp_driver',
       userId: driverUser.id,
       licenseNumber: 'LIC-DRIVER-001',
-      status: DriverStatus.IDLE,
+      status: 'IDLE',
       rating: 4.8 as any, // Decimal en Prisma acepta number
       totalTrips: 0,
       currentLat: -2.170 as any,
@@ -89,7 +89,7 @@ async function main() {
         color: 'Blanco',
         year: 2021,
         seats: 4,
-        type: VehicleType.SEDAN, // usar enum de Prisma
+        type: 'SEDAN', // usar literal del enum
         isActive: true,
       },
     })

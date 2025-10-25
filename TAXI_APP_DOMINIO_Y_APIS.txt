@@ -1,0 +1,167 @@
+TAXI APP — Dominio del problema, APIs y pendientes
+
+1) Dominio del problema
+- Actores: RIDER (pasajero), DRIVER (conductor), ADMIN.
+- Objetivo: conectar a un rider que solicita un viaje con un driver disponible cercano, calcular tarifa estimada, orquestar el flujo del viaje (asignación → aceptación → llegada → inicio → completado), y permitir observabilidad/gestión desde admin.
+- Entidades principales (según prisma/schema.prisma):
+  - User (role: ADMIN | DRIVER | RIDER), perfiles DriverProfile/RiderProfile.
+  - DriverProfile (estado, ubicación actual, rating, licencias, historial de ubicaciones).
+  - Trip (rider, driver, estado, coordenadas origen/destino, métricas, pricingSnapshot, payment opcional).
+  - TariffRule (reglas activas por ciudad: base, por km, por min, mínimos, multiplicadores).
+  - Payment (estado del pago e integración futura con proveedor).
+- Flujo típico (alto nivel):
+  1) Autenticación (registro/login) para obtener JWT.
+  2) Drivers reportan estado/ubicación periódicamente.
+  3) Rider solicita viaje (pickup/dropoff); sistema asigna driver IDLE más cercano.
+  4) Driver acepta, llega, inicia y completa el viaje; se calcula tarifa final.
+  5) Admin lista viajes con paginación tipo cursor.
+
+2) APIs disponibles (base: http://localhost:8080)
+- Salud del servicio
+  - GET /healthz
+    - Respuesta: { ok: true, uptime, env }
+    - Autenticación: no requiere.
+
+- Autenticación (JWT)
+  - POST /auth/register
+    - Body: { email, password, firstName, lastName, role: ADMIN|DRIVER|RIDER }
+    - Crea el usuario y, si es DRIVER/RIDER, su perfil asociado. Devuelve { token, user }.
+    - Ejemplo curl:
+      curl -X POST http://localhost:8080/auth/register \
+        -H "Content-Type: application/json" \
+        -d '{"email":"driver@taxi.local","password":"123456","firstName":"John","lastName":"Doe","role":"DRIVER"}'
+  - POST /auth/login
+    - Body: { email, password }
+    - Devuelve { token, user }.
+  - GET /auth/me
+    - Header: Authorization: Bearer <token>
+    - Devuelve { user } con datos básicos del usuario autenticado.
+
+- Conductores (reportes de estado/ubicación)
+  - POST /drivers/status
+  - POST /drivers/location (alias)
+    - Body: { lat?: number, lng?: number, status?: IDLE|ASSIGNED|ARRIVED|ON_TRIP|OFFLINE }
+    - Autenticación: admite dos vías:
+      1) Header x-user-id (para pruebas) o
+      2) Authorization: Bearer <token> (recomendado)
+    - Comportamiento:
+      - Upsert del DriverProfile si no existe (crea con valores por defecto).
+      - Si incluye lat/lng: almacena un registro en DriverLocationHistory.
+      - Actualiza el status del driver.
+    - Respuesta: { ok: true }
+
+- Viajes (rider y driver)
+  - POST /trips/request  [RIDER]
+    - Auth: Authorization: Bearer <token>
+    - Body (dos formatos equivalentes):
+      a) { city?, pickupLat, pickupLng, dropoffLat, dropoffLng, distanceKm?, durationMin? }
+      b) { city?, origin:{lat,lng}, destination:{lat,lng}, distanceKm?, durationMin? }
+    - Lógica:
+      - Busca drivers IDLE con ubicación reciente; elige el más cercano al pickup.
+      - Crea trip con estado ASSIGNED y snapshot de ciudad para pricing.
+      - Calcula tarifa estimada usando TariffRule activa de la ciudad.
+    - Respuesta: { ok: true, trip: { id, status }, pricing: { ...detalle } }
+
+  - GET /trips/:id  [RIDER/DRIVER/ADMIN]
+    - Auth: Bearer <token>
+    - Autorización: el usuario debe ser rider o driver del viaje, o ADMIN.
+    - Respuesta: { ok: true, trip: { id, status, riderId, driverId, timestamps, coords, métricas, costo } }
+
+  - POST /trips/:id/accept   [DRIVER]
+    - Auth: Bearer <token>, rol DRIVER y ser el driver asignado.
+    - Estado requerido: ASSIGNED → pasa a ACCEPTED.
+    - Respuesta: { ok: true }
+
+  - POST /trips/:id/arrive   [DRIVER]
+    - Estado requerido: ACCEPTED → pasa a ARRIVED.
+    - Respuesta: { ok: true }
+
+  - POST /trips/:id/start    [DRIVER]
+    - Estado requerido: ARRIVED → pasa a STARTED.
+    - Respuesta: { ok: true }
+
+  - POST /trips/:id/complete [DRIVER]
+    - Estado requerido: STARTED → pasa a COMPLETED.
+    - Calcula precio final (usando distancia/duración del trip o estimaciones) y persiste costo/currency y pricingSnapshot.
+    - Respuesta: { ok: true, trip: { id, status }, pricing }
+
+  - Alias: POST /trips/:id/arrived [DRIVER] (mismo efecto que /arrive)
+
+- Administración
+  - GET /admin/trips  [ADMIN]
+    - Auth: Bearer <token>
+    - Query: ?limit=50&cursor=<id>
+    - Respuesta: { items: Trip[], nextCursor? }
+    - Orden: requestedAt desc; cursor basado en id del último elemento de la página.
+
+3) Autenticación y seguridad
+- JWT con @fastify/jwt; helpers expuestos como app.auth.verifyJWT y app.auth.requireRole('...').
+- Swagger UI disponible en /docs; especifica esquemas y respuestas (OpenAPI 3.1).
+- CORS configurable vía env CORS_ORIGIN; rate-limit por ventana (configurable por env).
+
+4) Variables de entorno relevantes (backend)
+- PORT (default 8080), NODE_ENV, JWT_SECRET, JWT_EXPIRES_IN, CORS_ORIGIN.
+- RATE_LIMIT_MAX, RATE_LIMIT_TIME_WINDOW.
+- DATABASE_URL (PostgreSQL para Prisma).
+
+5) Ejemplos rápidos de uso
+- Login y guardar token (PowerShell):
+  $body = @{ email = 'rider@taxi.local'; password = '123456' } | ConvertTo-Json
+  $resp = Invoke-RestMethod -Method POST -Uri 'http://localhost:8080/auth/login' -ContentType 'application/json' -Body $body
+  $token = $resp.token
+
+- Solicitar viaje (RIDER):
+  Invoke-RestMethod -Method POST -Uri 'http://localhost:8080/trips/request' \
+    -Headers @{ Authorization = "Bearer $token" } \
+    -ContentType 'application/json' \
+    -Body '{"city":"Guayaquil","pickupLat":-2.170,"pickupLng":-79.922,"dropoffLat":-2.190,"dropoffLng":-79.890}'
+
+- Driver reporta ubicación/estado (con token de driver):
+  Invoke-RestMethod -Method POST -Uri 'http://localhost:8080/drivers/location' \
+    -Headers @{ Authorization = "Bearer $driverToken" } \
+    -ContentType 'application/json' \
+    -Body '{"lat":-2.171,"lng":-79.921,"status":"IDLE"}'
+
+6) Puntos importantes que faltan o mejorar
+- Estado/ubicación actual del driver en DriverProfile:
+  - Actualmente se registra en DriverLocationHistory pero no se actualizan currentLat/currentLng/locationUpdatedAt en DriverProfile al reportar. Recomendado actualizar estos campos para consultas rápidas y orden por recencia.
+- Cancelaciones y reintentos:
+  - No hay endpoints para cancelación de trip por rider/driver ni reasignación automática si un driver no acepta a tiempo.
+- Matching y disponibilidad avanzada:
+  - Today: selección por IDLE más cercano simple. Faltan: ventanas de tiempo, distancia/ETA en tiempo real, filtros por VehicleType, capacidad, o zonas.
+- Tiempo real y notificaciones:
+  - No hay WebSockets/Push para estado de viaje o pings del driver. Recomendado: canalizar eventos (p. ej., via websockets o pub/sub) y notificaciones (FCM/APNs).
+- Pagos:
+  - Modelo Payment existe pero sin endpoints de creación/captura/webhooks. Integrar proveedor (Stripe/PayPhone/etc.), manejo de estado (AUTHORIZED/PAID/FAILED), recibos, reembolsos.
+- Geocodificación y mapas:
+  - No hay integración con servicios de rutas/ETA/geocoding. Hoy se estima duración como función de distancia fija. Recomendado usar APIs de mapas.
+- Seguridad y robustez:
+  - Idempotencia en endpoints sensibles (ej. complete/start), validación de ownership consistente, límites de frecuencia por usuario, auditoría.
+- Operación y observabilidad:
+  - Métricas, trazas y logs estructurados por requestId; health liveness/readiness más completos.
+- Administración de tarifas:
+  - Faltan endpoints CRUD para TariffRule (crear/activar/inactivar, por ciudad y vigencias). Hoy solo consumo.
+- Listados para rider/driver:
+  - No hay endpoints para listar viajes históricos por rider/driver con paginación/filtrado.
+- Perfiles y verificación:
+  - Faltan flujos de verificación de documentos del driver, datos del vehículo, y validaciones de expiración de licencia.
+- Experiencia de usuario:
+  - Calificaciones post-viaje (rider→driver, driver→rider), comentarios, y soporte.
+- Internacionalización y multi-moneda:
+  - currency es USD por defecto. Faltan reglas multi-moneda, impuestos, propinas y promociones.
+- Tolerancia a fallos:
+  - Reintentos/compensaciones para transiciones de estado; colas para jobs (p. ej., asignación, notificaciones, pricing asíncrono).
+
+7) Recomendaciones de siguientes pasos
+- Añadir actualización de currentLat/currentLng/locationUpdatedAt en /drivers/status|location.
+- Implementar cancelación de viajes y expiración del estado ASSIGNED si no hay aceptación en X segundos.
+- Exponer CRUD de TariffRule y endpoint de simulación de tarifa.
+- Añadir WebSockets para eventos de viaje y estado del driver.
+- Integrar proveedor de pagos con endpoints y webhooks.
+- Agregar endpoints de listado por usuario (mis viajes) con paginación.
+- Endpoints admin adicionales: filtros por ciudad/estado/fechas y export.
+
+8) Documentación rápida
+- Swagger UI: http://localhost:8080/docs
+- Autorización en Swagger: usar bearerAuth con el token de /auth/login o /auth/register.
+

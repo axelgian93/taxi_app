@@ -5,9 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = driverRoutes;
 const prisma_1 = __importDefault(require("../../lib/prisma"));
-// Extrae userId desde x-user-id o verificando el Bearer token
+// Extrae userId desde req.user (JWT), header x-user-id, o verificando Bearer manualmente
 async function getUserId(app, req) {
-    // 1) Header directo (útil en pruebas manuales)
+    const fromReq = req.user?.id;
+    if (fromReq)
+        return fromReq;
+    // 1) Header directo (Ãºtil en pruebas manuales)
     const fromHeader = req.headers?.['x-user-id']?.trim();
     if (fromHeader)
         return fromHeader;
@@ -16,13 +19,13 @@ async function getUserId(app, req) {
     const m = auth.match(/^Bearer\s+(.+)$/i);
     if (!m)
         return undefined;
-    // Si registraste @fastify/jwt, úsalo para verificar
+    // Si registraste @fastify/jwt, Ãºsalo para verificar
     try {
-        // @ts-ignore - fastify-jwt añade .jwt al server
+        // @ts-ignore - fastify-jwt aÃ±ade .jwt al server
         const decoded = await app.jwt?.verify(m[1]);
-        const sub = decoded?.sub;
-        if (typeof sub === 'string' && sub)
-            return sub;
+        const id = decoded?.id;
+        if (typeof id === 'string' && id)
+            return id;
     }
     catch {
         // ignore: retornaremos undefined -> 401
@@ -44,10 +47,10 @@ async function handleReport(app, req, reply) {
             rating: 5.0,
             totalTrips: 0,
             status: 'IDLE',
-            licenseNumber: 'PENDING',
+            licenseNumber: "PENDING-{userId}",
         },
     });
-    // Si vinieron coordenadas, guardamos histórico
+    // Si vinieron coordenadas, guardamos histÃ³rico
     if (typeof body.lat === 'number' && typeof body.lng === 'number') {
         await prisma_1.default.driverLocationHistory.create({
             data: {
@@ -83,8 +86,8 @@ async function driverRoutes(app) {
         200: { type: 'object', properties: { ok: { type: 'boolean' } } },
     };
     // /drivers/status (original)
-    app.post('/drivers/status', { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } }, (req, reply) => handleReport(app, req, reply));
+    app.post('/drivers/status', { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
     // /drivers/location (alias que usa el smoke)
-    app.post('/drivers/location', { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } }, (req, reply) => handleReport(app, req, reply));
+    app.post('/drivers/location', { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
 }
 //# sourceMappingURL=driver.routes.js.map

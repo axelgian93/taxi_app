@@ -1,17 +1,19 @@
-// src/modules/drivers/driver.routes.ts
+﻿// src/modules/drivers/driver.routes.ts
 import type { FastifyInstance } from 'fastify'
 import prisma from '../../lib/prisma'
-import { DriverStatus } from '@prisma/client'
+import type { $Enums } from '@prisma/client'
 
 type BodyReport = {
   lat?: number
   lng?: number
-  status?: DriverStatus
+  status?: $Enums.DriverStatus
 }
 
-// Extrae userId desde x-user-id o verificando el Bearer token
+// Extrae userId desde req.user (JWT), header x-user-id, o verificando Bearer manualmente
 async function getUserId(app: FastifyInstance, req: any): Promise<string | undefined> {
-  // 1) Header directo (útil en pruebas manuales)
+  const fromReq = (req as any).user?.id as string | undefined
+  if (fromReq) return fromReq
+  // 1) Header directo (Ãºtil en pruebas manuales)
   const fromHeader = (req.headers?.['x-user-id'] as string | undefined)?.trim()
   if (fromHeader) return fromHeader
 
@@ -20,12 +22,12 @@ async function getUserId(app: FastifyInstance, req: any): Promise<string | undef
   const m = auth.match(/^Bearer\s+(.+)$/i)
   if (!m) return undefined
 
-  // Si registraste @fastify/jwt, úsalo para verificar
+  // Si registraste @fastify/jwt, Ãºsalo para verificar
   try {
-    // @ts-ignore - fastify-jwt añade .jwt al server
+    // @ts-ignore - fastify-jwt aÃ±ade .jwt al server
     const decoded = await app.jwt?.verify(m[1])
-    const sub = (decoded as any)?.sub
-    if (typeof sub === 'string' && sub) return sub
+    const id = (decoded as any)?.id
+    if (typeof id === 'string' && id) return id
   } catch {
     // ignore: retornaremos undefined -> 401
   }
@@ -37,7 +39,7 @@ async function handleReport(app: FastifyInstance, req: any, reply: any) {
   if (!userId) return reply.code(401).send({ error: 'Unauthorized' })
 
   const body = (req.body || {}) as BodyReport
-  const status = (body.status ?? 'IDLE') as DriverStatus
+  const status = (body.status ?? 'IDLE') as $Enums.DriverStatus
 
   // Aseguramos que exista el DriverProfile
   const driverProfile = await prisma.driverProfile.upsert({
@@ -48,11 +50,11 @@ async function handleReport(app: FastifyInstance, req: any, reply: any) {
       rating: 5.0,
       totalTrips: 0,
       status: 'IDLE',
-      licenseNumber: 'PENDING',
+      licenseNumber: "PENDING-{userId}",
     },
   })
 
-  // Si vinieron coordenadas, guardamos histórico
+  // Si vinieron coordenadas, guardamos histÃ³rico
   if (typeof body.lat === 'number' && typeof body.lng === 'number') {
     await prisma.driverLocationHistory.create({
       data: {
@@ -95,14 +97,14 @@ export default async function driverRoutes(app: FastifyInstance) {
   // /drivers/status (original)
   app.post(
     '/drivers/status',
-    { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } },
+    { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT },
     (req, reply) => handleReport(app, req, reply),
   )
 
   // /drivers/location (alias que usa el smoke)
   app.post(
     '/drivers/location',
-    { schema: { tags: ['drivers'], body: bodySchema, response: responseOk } },
+    { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT },
     (req, reply) => handleReport(app, req, reply),
   )
 }
