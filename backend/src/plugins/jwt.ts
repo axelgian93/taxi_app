@@ -39,7 +39,9 @@ export default fp(async (app) => {
 
   function requireRole(role: 'ADMIN' | 'DRIVER' | 'RIDER') {
     return async (request: any, reply: any) => {
-      if (!request.user) {
+      try {
+        await request.jwtVerify()
+      } catch {
         return reply.code(401).send({ error: 'Unauthorized' })
       }
       if (request.user.role !== role) {

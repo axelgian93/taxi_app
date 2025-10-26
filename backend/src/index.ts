@@ -1,4 +1,4 @@
-// src/index.ts
+﻿// src/index.ts
 import 'dotenv/config'
 import Fastify, { FastifyInstance } from 'fastify'
 import cors from '@fastify/cors'
@@ -7,15 +7,24 @@ import swaggerUi from '@fastify/swagger-ui'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 
-// 🔐 plugin JWT
+// ðŸ” plugin JWT
 import jwtPlugin from './plugins/jwt'
+import metricsPlugin from './plugins/metrics'
+import availabilityPlugin from './plugins/availability'
+import tripSupervisorPlugin from './plugins/trip-supervisor'
+import webhooksRawPlugin from './plugins/webhooks-raw'
 
 // Rutas
 import authRoutes from './modules/auth/auth.routes'
 import driverRoutes from './modules/drivers/driver.routes'
 import tripRoutes from './modules/trips/trip.routes'
 import adminTripsRoutes from './modules/admin/admin.trips.routes'
+import adminDiagnosticsRoutes from './modules/admin/admin.diagnostics.routes'
+import adminMetricsRoutes from './modules/admin/admin.metrics.routes'
 import userRoutes from './modules/users/user.routes'
+import paymentRoutes from './modules/payments/payment.routes'
+import stripeWebhookRoutes from './modules/payments/stripe.webhook.routes'
+import paymentSetupRoutes from './modules/payments/payment.setup.routes'
 
 const PORT = Number(process.env.PORT || 8080)
 const NODE_ENV = process.env.NODE_ENV || 'development'
@@ -52,10 +61,13 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(swaggerUi, { routePrefix: '/docs', uiConfig: { docExpansion: 'list', deepLinking: true } })
   await app.register(helmet, { contentSecurityPolicy: false })
   await app.register(rateLimit, { max: RL_MAX, timeWindow: RL_WIN })
+  await app.register(metricsPlugin)
+  await app.register(availabilityPlugin)
+  await app.register(tripSupervisorPlugin)
 
   app.get('/healthz', { schema: { security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
 
-  // 🔐 JWT ANTES de registrar rutas
+  // ðŸ” JWT ANTES de registrar rutas
   await app.register(jwtPlugin)
 
   // Rutas
@@ -63,7 +75,14 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(driverRoutes)
   await app.register(tripRoutes)
   await app.register(adminTripsRoutes)
+  await app.register(adminDiagnosticsRoutes)
+  await app.register(adminMetricsRoutes)
   await app.register(userRoutes)
+  await app.register(paymentRoutes)
+  // Raw body for all /webhooks/* (e.g., Stripe)
+  await app.register(webhooksRawPlugin)
+  await app.register(stripeWebhookRoutes, { prefix: '/webhooks' })
+  await app.register(paymentSetupRoutes)
 
   return app
 }
@@ -71,11 +90,11 @@ async function buildServer(): Promise<FastifyInstance> {
 async function main() {
   const app = await buildServer()
   await app.listen({ port: PORT, host: '0.0.0.0' })
-  app.log.info(`🚀 Taxi API corriendo en http://localhost:${PORT}`)
-  app.log.info(`📖 Swagger UI en    http://localhost:${PORT}/docs`)
+  app.log.info(`ðŸš€ Taxi API corriendo en http://localhost:${PORT}`)
+  app.log.info(`ðŸ“– Swagger UI en    http://localhost:${PORT}/docs`)
 }
 
 main().catch(err => {
-  console.error('❌ Error al iniciar el servidor:', err)
+  console.error('âŒ Error al iniciar el servidor:', err)
   process.exit(1)
 })

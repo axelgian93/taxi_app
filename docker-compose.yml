@@ -50,6 +50,54 @@ services:
     restart: unless-stopped
     profiles: ["prod"]
 
+  # ---------- MONITOREO (Prometheus + Grafana) ----------
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: taxi_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prom_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    profiles: ["monitor"]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: taxi_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    profiles: ["monitor"]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: taxi_alertmanager
+    restart: unless-stopped
+    command: ["--config.file=/etc/alertmanager/alertmanager.yml", "--log.level=info", "--config.expand-env=true"]
+    environment:
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - ALERT_EMAIL_TO=${ALERT_EMAIL_TO:-}
+      - ALERT_EMAIL_FROM=${ALERT_EMAIL_FROM:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+    volumes:
+      - ./infra/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    ports:
+      - "127.0.0.1:9093:9093"
+    profiles: ["monitor"]
+
   # ---------- PERFIL DESARROLLO (hot-reload) ----------
   api-dev:
     image: node:22-alpine
@@ -86,4 +134,6 @@ services:
 volumes:
   db_data:
   redis_data:
+  prom_data:
+  grafana_data:
   node_deps:

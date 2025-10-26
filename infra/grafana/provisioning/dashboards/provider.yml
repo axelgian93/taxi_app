@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: Taxi Dashboards
+    orgId: 1
+    folder: Taxi
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+

@@ -11,14 +11,23 @@ const swagger_1 = __importDefault(require("@fastify/swagger"));
 const swagger_ui_1 = __importDefault(require("@fastify/swagger-ui"));
 const helmet_1 = __importDefault(require("@fastify/helmet"));
 const rate_limit_1 = __importDefault(require("@fastify/rate-limit"));
-// 🔐 plugin JWT
+// ðŸ” plugin JWT
 const jwt_1 = __importDefault(require("./plugins/jwt"));
+const metrics_1 = __importDefault(require("./plugins/metrics"));
+const availability_1 = __importDefault(require("./plugins/availability"));
+const trip_supervisor_1 = __importDefault(require("./plugins/trip-supervisor"));
+const webhooks_raw_1 = __importDefault(require("./plugins/webhooks-raw"));
 // Rutas
 const auth_routes_1 = __importDefault(require("./modules/auth/auth.routes"));
 const driver_routes_1 = __importDefault(require("./modules/drivers/driver.routes"));
 const trip_routes_1 = __importDefault(require("./modules/trips/trip.routes"));
 const admin_trips_routes_1 = __importDefault(require("./modules/admin/admin.trips.routes"));
+const admin_diagnostics_routes_1 = __importDefault(require("./modules/admin/admin.diagnostics.routes"));
+const admin_metrics_routes_1 = __importDefault(require("./modules/admin/admin.metrics.routes"));
 const user_routes_1 = __importDefault(require("./modules/users/user.routes"));
+const payment_routes_1 = __importDefault(require("./modules/payments/payment.routes"));
+const stripe_webhook_routes_1 = __importDefault(require("./modules/payments/stripe.webhook.routes"));
+const payment_setup_routes_1 = __importDefault(require("./modules/payments/payment.setup.routes"));
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
 function parseCorsOrigin() {
@@ -51,25 +60,35 @@ async function buildServer() {
     await app.register(swagger_ui_1.default, { routePrefix: '/docs', uiConfig: { docExpansion: 'list', deepLinking: true } });
     await app.register(helmet_1.default, { contentSecurityPolicy: false });
     await app.register(rate_limit_1.default, { max: RL_MAX, timeWindow: RL_WIN });
+    await app.register(metrics_1.default);
+    await app.register(availability_1.default);
+    await app.register(trip_supervisor_1.default);
     app.get('/healthz', { schema: { security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }));
-    // 🔐 JWT ANTES de registrar rutas
+    // ðŸ” JWT ANTES de registrar rutas
     await app.register(jwt_1.default);
     // Rutas
     await app.register(auth_routes_1.default);
     await app.register(driver_routes_1.default);
     await app.register(trip_routes_1.default);
     await app.register(admin_trips_routes_1.default);
+    await app.register(admin_diagnostics_routes_1.default);
+    await app.register(admin_metrics_routes_1.default);
     await app.register(user_routes_1.default);
+    await app.register(payment_routes_1.default);
+    // Raw body for all /webhooks/* (e.g., Stripe)
+    await app.register(webhooks_raw_1.default);
+    await app.register(stripe_webhook_routes_1.default, { prefix: '/webhooks' });
+    await app.register(payment_setup_routes_1.default);
     return app;
 }
 async function main() {
     const app = await buildServer();
     await app.listen({ port: PORT, host: '0.0.0.0' });
-    app.log.info(`🚀 Taxi API corriendo en http://localhost:${PORT}`);
-    app.log.info(`📖 Swagger UI en    http://localhost:${PORT}/docs`);
+    app.log.info(`ðŸš€ Taxi API corriendo en http://localhost:${PORT}`);
+    app.log.info(`ðŸ“– Swagger UI en    http://localhost:${PORT}/docs`);
 }
 main().catch(err => {
-    console.error('❌ Error al iniciar el servidor:', err);
+    console.error('âŒ Error al iniciar el servidor:', err);
     process.exit(1);
 });
 //# sourceMappingURL=index.js.map

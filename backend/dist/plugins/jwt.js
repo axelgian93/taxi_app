@@ -23,7 +23,10 @@ exports.default = (0, fastify_plugin_1.default)(async (app) => {
     }
     function requireRole(role) {
         return async (request, reply) => {
-            if (!request.user) {
+            try {
+                await request.jwtVerify();
+            }
+            catch {
                 return reply.code(401).send({ error: 'Unauthorized' });
             }
             if (request.user.role !== role) {

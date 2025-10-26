@@ -14,8 +14,8 @@ COPY prisma ./prisma
 COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 
-# 4) Compilamos y generamos Prisma Client
-RUN npm run build && npx prisma generate
+# 4) Generamos Prisma Client antes de compilar (necesario para tipos)
+RUN npx prisma generate && npm run build
 
 # 5) Podamos devDependencies
 RUN npm prune --omit=dev

@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'taxi_api'
+    scheme: http
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials: metrics_secret_token
+    static_configs:
+      - targets: ['taxi_api:8080']
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']

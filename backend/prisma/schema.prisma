@@ -1,8 +1,4 @@
 // prisma/schema.prisma
-// ─────────────────────────────────────────────────────────────────────────────
-// Si tuvieras modelos generados por `db pull` (p.ej. de PostGIS), puedes
-// volver a introspectar luego. Para la app de taxi, este es el esquema base.
-// ─────────────────────────────────────────────────────────────────────────────
 
 generator client {
   provider = "prisma-client-js"
@@ -10,12 +6,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Ej: postgresql://user:pass@localhost:5432/taxi_app?schema=taxi_app
+  url      = env("DATABASE_URL")
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// ENU MS
-/// ─────────────────────────────────────────────────────────────────────────────
+// Enums
 enum Role {
   ADMIN
   DRIVER
@@ -24,7 +18,7 @@ enum Role {
 
 enum DriverStatus {
   OFFLINE
-  IDLE // conectado y disponible
+  IDLE
   ON_TRIP
   SUSPENDED
 }
@@ -55,28 +49,25 @@ enum VehicleType {
   TRUCK
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// MODELOS PRINCIPALES
-/// ─────────────────────────────────────────────────────────────────────────────
-
+// Models
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  phone        String?  @unique
-  fcmToken     String?
-  passwordHash String
-  firstName    String
-  lastName     String
-  role         Role     @default(RIDER)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                           String   @id @default(cuid())
+  email                        String   @unique
+  phone                        String?  @unique
+  fcmToken                     String?
+  stripeCustomerId             String?
+  stripeDefaultPaymentMethodId String?
+  passwordHash                 String
+  firstName                    String
+  lastName                     String
+  role                         Role     @default(RIDER)
+  isActive                     Boolean  @default(true)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
 
-  // Perfiles (según rol)
   driverProfile DriverProfile?
   riderProfile  RiderProfile?
 
-  // Viajes
   tripsAsRider  Trip[] @relation("RiderTrips")
   tripsAsDriver Trip[] @relation("DriverTrips")
 
@@ -85,12 +76,11 @@ model User {
 }
 
 model RiderProfile {
-  id                     String   @id @default(cuid())
-  userId                 String   @unique
-  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  defaultPaymentMethodId String?
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model DriverProfile {
@@ -102,19 +92,15 @@ model DriverProfile {
   licenseExpiresAt DateTime?
   status           DriverStatus @default(OFFLINE)
 
-  // Ubicación actual
   currentLat        Decimal?  @db.Decimal(9, 6)
   currentLng        Decimal?  @db.Decimal(9, 6)
   locationUpdatedAt DateTime?
 
-  rating     Decimal? @db.Decimal(3, 2) // 0.00 - 5.00
+  rating     Decimal? @db.Decimal(3, 2)
   totalTrips Int      @default(0)
   documents  Json?
 
-  // Relación con vehículo (1:1)
-  vehicle Vehicle?
-
-  // Historial de ubicaciones (lado opuesto de la relación nombrada)
+  vehicle   Vehicle?
   locations DriverLocationHistory[] @relation("DriverLocationHistoryByDriver")
 
   createdAt DateTime @default(now())
@@ -148,15 +134,12 @@ model Vehicle {
 model Trip {
   id String @id @default(cuid())
 
-  // Pasajero
   riderId String
   rider   User   @relation("RiderTrips", fields: [riderId], references: [id])
 
-  // Conductor (opcional hasta asignación)
   driverId String?
   driver   User?   @relation("DriverTrips", fields: [driverId], references: [id])
 
-  // Vehículo (opcional)
   vehicleId String?
   vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
 
@@ -171,7 +154,6 @@ model Trip {
   canceledAt   DateTime?
   cancelReason String?
 
-  // Ubicaciones
   pickupLat     Decimal @db.Decimal(9, 6)
   pickupLng     Decimal @db.Decimal(9, 6)
   pickupAddress String?
@@ -180,16 +162,15 @@ model Trip {
   dropoffLng     Decimal @db.Decimal(9, 6)
   dropoffAddress String?
 
-  // Métricas
   distanceKm  Decimal? @db.Decimal(10, 3)
   durationMin Int?
   costUsd     Decimal? @db.Decimal(10, 2)
   currency    String   @default("USD")
 
-  // Congelar reglas aplicadas para auditoría
   pricingSnapshot Json?
 
   payment Payment?
+  refunds PaymentRefund[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,14 +187,33 @@ model Payment {
 
   amountUsd  Decimal       @db.Decimal(10, 2)
   status     PaymentStatus @default(PENDING)
-  method     String // "CASH" | "CARD" | "TRANSFER" | etc.
-  provider   String? // "Stripe" | "PayPhone" | "Datafast" | etc.
+  method     String
+  provider   String?
   externalId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  refunds PaymentRefund[]
+
   @@index([status])
+}
+
+model PaymentRefund {
+  id        String  @id @default(cuid())
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  tripId    String
+  trip      Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  amountUsd  Decimal  @db.Decimal(10, 2)
+  reason     String?
+  provider   String?
+  externalId String?
+  createdAt  DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([tripId, createdAt(sort: Desc)])
 }
 
 model TariffRule {
@@ -226,19 +226,21 @@ model TariffRule {
   perMinUsd   Decimal @db.Decimal(10, 2)
   minFareUsd  Decimal @default(0) @db.Decimal(10, 2)
 
-  // Multiplicadores
   nightMultiplier   Decimal @default(1.00) @db.Decimal(4, 2)
   weekendMultiplier Decimal @default(1.00) @db.Decimal(4, 2)
   surgeMultiplier   Decimal @default(1.00) @db.Decimal(4, 2)
 
-  // Rango horario de noche (0-23, hora local)
   nightStartHour Int?
   nightEndHour   Int?
 
+  // Cancellation policy (optional, overrides env if present)
+  cancellationGraceSec       Int?
+  cancellationFeeAcceptedUsd Decimal? @db.Decimal(10, 2)
+  cancellationFeeArrivedUsd  Decimal? @db.Decimal(10, 2)
+
   validFrom DateTime?
   validTo   DateTime?
-
-  notes String?
+  notes     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -246,11 +248,9 @@ model TariffRule {
   @@index([city, active])
 }
 
-/// Histórico de ubicación del conductor
 model DriverLocationHistory {
   id         String        @id @default(cuid())
   driverId   String
-  // Relación nombrada y con lado opuesto en DriverProfile.locations
   driver     DriverProfile @relation("DriverLocationHistoryByDriver", fields: [driverId], references: [id], onDelete: Cascade)
   lat        Decimal       @db.Decimal(9, 6)
   lng        Decimal       @db.Decimal(9, 6)

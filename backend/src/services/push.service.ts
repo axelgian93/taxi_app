@@ -6,8 +6,8 @@ type PushData = Record<string, string | number | boolean | null | undefined>
 
 export async function sendPushToUser(userId: string, opts: { title: string; body: string; data?: PushData }) {
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { fcmToken: true, email: true } as any })
-    const token = (user as any)?.fcmToken as string | undefined
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { fcmToken: true, email: true } })
+    const token = user?.fcmToken || undefined
     if (!token) {
       console.warn(`[push] No FCM token for user=${userId}`)
       return false
@@ -17,6 +17,19 @@ export async function sendPushToUser(userId: string, opts: { title: string; body
       console.warn('[push] Missing FCM_SERVER_KEY; skipping push')
       return false
     }
+    const tokenPreview = token.slice(0, 10) + '...' + token.slice(-6)
+    const payload = {
+      to: token,
+      notification: { title: opts.title, body: opts.body },
+      data: opts.data ?? {},
+    }
+    console.info('[push] Dispatch', {
+      userId,
+      tokenPreview,
+      titleLen: opts.title?.length ?? 0,
+      bodyLen: opts.body?.length ?? 0,
+      dataKeys: Object.keys(payload.data || {}),
+    })
 
     const res = await fetch('https://fcm.googleapis.com/fcm/send', {
       method: 'POST',
@@ -24,17 +37,14 @@ export async function sendPushToUser(userId: string, opts: { title: string; body
         'Content-Type': 'application/json',
         Authorization: `key=${serverKey}`,
       },
-      body: JSON.stringify({
-        to: token,
-        notification: { title: opts.title, body: opts.body },
-        data: opts.data ?? {},
-      }),
+      body: JSON.stringify(payload),
     })
+    const text = await res.text().catch(() => '')
     if (!res.ok) {
-      const txt = await res.text().catch(() => '')
-      console.error('[push] FCM error:', res.status, txt)
+      console.error('[push] FCM error', { status: res.status, body: text.slice(0, 300) })
       return false
     }
+    console.info('[push] FCM ok', { status: res.status, body: text.slice(0, 300) })
     return true
   } catch (e) {
     console.error('[push] Unexpected error:', e)
