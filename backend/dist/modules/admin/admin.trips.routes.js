@@ -28,18 +28,11 @@ const tripItem = {
 async function adminTripsRoutes(app) {
     app.get('/admin/trips', {
         schema: {
+            operationId: 'adminTripsList',
             tags: ['admin'],
             security: [{ bearerAuth: [] }],
             querystring: listQuery,
-            response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        items: { type: 'array', items: tripItem },
-                        nextCursor: { type: 'string', nullable: true }
-                    }
-                }
-            }
+            response: { 200: { type: 'object', properties: { items: { type: 'array', items: tripItem }, nextCursor: { type: 'string', nullable: true } } }, 401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } } }
         }
     }, async (req, reply) => {
         const { limit = 50, cursor } = req.query;

@@ -14,7 +14,8 @@ exports.requestTripBody = {
         pickupAddress: { type: 'string', nullable: true },
         dropoffAddress: { type: 'string', nullable: true },
         distanceKm: { type: 'number', example: 5.4 },
-        durationMin: { type: 'number', example: 14 }
+        durationMin: { type: 'number', example: 14 },
+        preferredMethod: { type: 'string', enum: ['CASH', 'CARD'], nullable: true, example: 'CASH' }
     }
 };
 exports.tripResponse = {

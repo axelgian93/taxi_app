@@ -21,7 +21,7 @@ async function adminDiagnosticsRoutes(app) {
             counters: { type: 'object', additionalProperties: { type: 'integer' } },
         },
     };
-    app.get('/admin/diagnostics/matching', { schema: { tags: ['admin'], summary: 'Diagnostics matching', description: 'Estado de PostGIS y parámetros de matching (env) + contadores de uso.', response: { 200: respSchema } }, preHandler: app.auth.requireRole('ADMIN') }, async (_req, reply) => {
+    app.get('/admin/diagnostics/matching', { schema: { operationId: 'adminDiagnosticsMatching', tags: ['admin'], summary: 'Diagnostics matching', description: 'Estado de PostGIS y parÃ¡metros de matching (env) + contadores de uso.', response: { 200: respSchema, 401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (_req, reply) => {
         let postgisAvailable = false;
         try {
             const r = await prisma_1.default.$queryRaw `SELECT extname FROM pg_extension WHERE extname='postgis'`;

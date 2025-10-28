@@ -47,6 +47,7 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /auth/register
   app.post('/auth/register', {
     schema: {
+      operationId: 'authRegister',
       tags: ['auth'],
       security: [],
       body: registerBodySchema,
@@ -102,6 +103,7 @@ export default async function authRoutes(app: FastifyInstance) {
   // POST /auth/login
   app.post('/auth/login', {
     schema: {
+      operationId: 'authLogin',
       tags: ['auth'],
       security: [],
       body: loginBodySchema,
@@ -128,7 +130,7 @@ export default async function authRoutes(app: FastifyInstance) {
   })
 
   // GET /auth/me
-  app.get('/auth/me', { schema: { tags: ['auth'] } }, async (req: any, reply) => {
+  app.get('/auth/me', { schema: { operationId: 'authMe', tags: ['auth'], response: { 200: { type: 'object', properties: { user: { type: 'object', properties: { id: { type: 'string' }, email: { type: 'string' }, role: { type: 'string', enum: ['ADMIN','DRIVER','RIDER'] }, firstName: { type: 'string' }, lastName: { type: 'string' } } } } }, 401: { type: 'object', properties: { error: { type: 'string' } } } } } }, async (req: any, reply) => {
     try {
       await req.jwtVerify()
     } catch {

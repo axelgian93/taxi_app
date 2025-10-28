@@ -12,7 +12,7 @@ export default async function stripeWebhookRoutes(app: FastifyInstance) {
   }
 
   // Assumes a raw-body parser is provided by a parent scope (webhooks-raw plugin)
-  app.post('/stripe', { schema: { tags: ['payments'], summary: 'Stripe webhook', security: [] } }, async (req, reply) => {
+  app.post('/stripe', { schema: { operationId: 'webhooksStripe', tags: ['payments'], summary: 'Stripe webhook', security: [] } }, async (req, reply) => {
       const sig = (req.headers['stripe-signature'] as string) || ''
       let event: any
       try {

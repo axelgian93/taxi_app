@@ -16,6 +16,7 @@ const jwt_1 = __importDefault(require("./plugins/jwt"));
 const metrics_1 = __importDefault(require("./plugins/metrics"));
 const availability_1 = __importDefault(require("./plugins/availability"));
 const trip_supervisor_1 = __importDefault(require("./plugins/trip-supervisor"));
+const operation_ids_1 = __importDefault(require("./plugins/operation-ids"));
 const webhooks_raw_1 = __importDefault(require("./plugins/webhooks-raw"));
 // Rutas
 const auth_routes_1 = __importDefault(require("./modules/auth/auth.routes"));
@@ -24,6 +25,7 @@ const trip_routes_1 = __importDefault(require("./modules/trips/trip.routes"));
 const admin_trips_routes_1 = __importDefault(require("./modules/admin/admin.trips.routes"));
 const admin_diagnostics_routes_1 = __importDefault(require("./modules/admin/admin.diagnostics.routes"));
 const admin_metrics_routes_1 = __importDefault(require("./modules/admin/admin.metrics.routes"));
+const admin_tariff_routes_1 = __importDefault(require("./modules/admin/admin.tariff.routes"));
 const user_routes_1 = __importDefault(require("./modules/users/user.routes"));
 const payment_routes_1 = __importDefault(require("./modules/payments/payment.routes"));
 const stripe_webhook_routes_1 = __importDefault(require("./modules/payments/stripe.webhook.routes"));
@@ -62,8 +64,10 @@ async function buildServer() {
     await app.register(rate_limit_1.default, { max: RL_MAX, timeWindow: RL_WIN });
     await app.register(metrics_1.default);
     await app.register(availability_1.default);
+    // Ensure operationId mapping is applied as routes are registered
+    await app.register(operation_ids_1.default);
     await app.register(trip_supervisor_1.default);
-    app.get('/healthz', { schema: { security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }));
+    app.get('/healthz', { schema: { operationId: 'healthz', security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }));
     // ðŸ” JWT ANTES de registrar rutas
     await app.register(jwt_1.default);
     // Rutas
@@ -73,6 +77,7 @@ async function buildServer() {
     await app.register(admin_trips_routes_1.default);
     await app.register(admin_diagnostics_routes_1.default);
     await app.register(admin_metrics_routes_1.default);
+    await app.register(admin_tariff_routes_1.default);
     await app.register(user_routes_1.default);
     await app.register(payment_routes_1.default);
     // Raw body for all /webhooks/* (e.g., Stripe)

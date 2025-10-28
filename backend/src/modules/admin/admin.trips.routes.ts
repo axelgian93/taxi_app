@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+﻿import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import prisma from '../../lib/prisma'
 
 const listQuery = {
@@ -28,18 +28,11 @@ export default async function adminTripsRoutes(app: FastifyInstance) {
     '/admin/trips',
     {
       schema: {
+        operationId: 'adminTripsList',
         tags: ['admin'],
         security: [{ bearerAuth: [] }],
         querystring: listQuery,
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              items: { type: 'array', items: tripItem },
-              nextCursor: { type: 'string', nullable: true }
-            }
-          }
-        }
+        response: { 200: { type: 'object', properties: { items: { type: 'array', items: tripItem }, nextCursor: { type: 'string', nullable: true } } }, 401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } } }
       }
     },
     async (req: FastifyRequest, reply: FastifyReply) => {
@@ -58,3 +51,4 @@ export default async function adminTripsRoutes(app: FastifyInstance) {
     }
   )
 }
+

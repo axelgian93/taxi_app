@@ -12,6 +12,7 @@ import jwtPlugin from './plugins/jwt'
 import metricsPlugin from './plugins/metrics'
 import availabilityPlugin from './plugins/availability'
 import tripSupervisorPlugin from './plugins/trip-supervisor'
+import opIdsPlugin from './plugins/operation-ids'
 import webhooksRawPlugin from './plugins/webhooks-raw'
 
 // Rutas
@@ -21,6 +22,7 @@ import tripRoutes from './modules/trips/trip.routes'
 import adminTripsRoutes from './modules/admin/admin.trips.routes'
 import adminDiagnosticsRoutes from './modules/admin/admin.diagnostics.routes'
 import adminMetricsRoutes from './modules/admin/admin.metrics.routes'
+import adminTariffRoutes from './modules/admin/admin.tariff.routes'
 import userRoutes from './modules/users/user.routes'
 import paymentRoutes from './modules/payments/payment.routes'
 import stripeWebhookRoutes from './modules/payments/stripe.webhook.routes'
@@ -63,9 +65,11 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(rateLimit, { max: RL_MAX, timeWindow: RL_WIN })
   await app.register(metricsPlugin)
   await app.register(availabilityPlugin)
+  // Ensure operationId mapping is applied as routes are registered
+  await app.register(opIdsPlugin)
   await app.register(tripSupervisorPlugin)
 
-  app.get('/healthz', { schema: { security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
+  app.get('/healthz', { schema: { operationId: 'healthz', security: [] } }, async () => ({ ok: true, uptime: process.uptime(), env: NODE_ENV }))
 
   // ðŸ” JWT ANTES de registrar rutas
   await app.register(jwtPlugin)
@@ -77,6 +81,7 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(adminTripsRoutes)
   await app.register(adminDiagnosticsRoutes)
   await app.register(adminMetricsRoutes)
+  await app.register(adminTariffRoutes)
   await app.register(userRoutes)
   await app.register(paymentRoutes)
   // Raw body for all /webhooks/* (e.g., Stripe)

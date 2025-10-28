@@ -53,7 +53,7 @@ async function paymentRoutes(app) {
         },
         additionalProperties: false,
     };
-    app.get('/payments', { schema: { tags: ['payments'], summary: 'Listar pagos (ADMIN)', description: 'Lista pagos con filtros opcionales y paginación.', querystring: listQuery, response: { 200: { type: 'object', properties: { items: { type: 'array', items: paymentSchema }, nextCursor: { type: 'string', nullable: true } } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
+    app.get('/payments', { schema: { operationId: 'paymentsList', tags: ['payments'], summary: 'Listar pagos (ADMIN)', description: 'Lista pagos con filtros opcionales y paginacion. Si format=csv, devuelve text/csv.', querystring: listQuery, response: { 200: { content: { 'application/json': { schema: { type: 'object', properties: { items: { type: 'array', items: paymentSchema }, nextCursor: { type: 'string', nullable: true } }, example: { items: [paymentSchema.example], nextCursor: null } } }, 'text/csv': { schema: { type: 'string', example: 'id,tripId,amountUsd,status,method,provider,externalId,createdAt,updatedAt,isAuthorized,isPaid,isFailed,providerDisplay,capturable\n"pay_123","trp_123",7.8,"PAID","CASH","","","2025-01-01T12:20:00.000Z","2025-01-01T12:20:00.000Z",false,true,false,"Cash",false\n' } } } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
         const { userId, status, city, from, to, limit = 50, cursor, format = 'json' } = req.query;
         const where = {};
         if (status)
@@ -111,13 +111,13 @@ async function paymentRoutes(app) {
         return reply.send({ items: mapped, nextCursor });
     });
     // Admin capture of authorized Stripe payments
-    app.post('/payments/:tripId/capture', { schema: { tags: ['payments'], summary: 'Capturar pago autorizado (ADMIN)', description: 'Captura un PaymentIntent autorizado de Stripe para el trip.', params: idParamSchema, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } }, 400: errorSchema, 404: errorSchema } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
+    app.post('/payments/:tripId/capture', { schema: { operationId: 'paymentsCaptureByTrip', tags: ['payments'], summary: 'Capturar pago autorizado (ADMIN)', description: 'Captura un PaymentIntent autorizado de Stripe para el trip.', params: idParamSchema, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } }, 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'No hay autorizacion Stripe capturable' } }, 404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Payment no encontrado' } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
         const { tripId } = req.params;
         const payment = await prisma_1.default.payment.findUnique({ where: { tripId } });
         if (!payment)
             return reply.code(404).send({ error: 'Payment no encontrado' });
         if (payment.provider !== 'Stripe' || payment.status !== 'AUTHORIZED' || !payment.externalId) {
-            return reply.code(400).send({ error: 'No hay autorización Stripe capturable' });
+            return reply.code(400).send({ error: 'No hay autorizacion Stripe capturable' });
         }
         const { getStripe } = require('../../services/stripe.service');
         const stripe = getStripe();
@@ -131,18 +131,18 @@ async function paymentRoutes(app) {
             return reply.send({ ok: true });
         }
         catch (e) {
-            return reply.code(400).send({ error: 'Captura falló' });
+            return reply.code(400).send({ error: 'Captura fallÃ³' });
         }
     });
     // Admin refund endpoint
-    app.post('/payments/:tripId/refund', { schema: { tags: ['payments'], summary: 'Refund/cancel (ADMIN)', description: 'Reembolsa un Payment capturado (Stripe) o cancela autorización. Para otros métodos, marca REFUNDED y registra auditoría.', params: idParamSchema, body: { type: 'object', properties: { amountUsd: { type: 'number' }, reason: { type: 'string' } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } }, 400: errorSchema, 404: errorSchema } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
+    app.post('/payments/:tripId/refund', { schema: { operationId: 'paymentsRefundByTrip', tags: ['payments'], summary: 'Refund/cancel (ADMIN)', description: 'Reembolsa un Payment capturado (Stripe) o cancela autorizacion. Para otros metodos, marca REFUNDED y registra auditoria.', params: idParamSchema, body: { type: 'object', properties: { amountUsd: { type: 'number' }, reason: { type: 'string' } }, additionalProperties: false, example: { amountUsd: 2.5, reason: 'customer_request' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } }, 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'No hay autorizacion Stripe capturable' } }, 404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Payment no encontrado' } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
         const { tripId } = req.params;
         const { amountUsd, reason } = (req.body || {});
         const payment = await prisma_1.default.payment.findUnique({ where: { tripId } });
         if (!payment)
             return reply.code(404).send({ error: 'Payment no encontrado' });
         if (payment.status === 'REFUNDED')
-            return reply.code(400).send({ error: 'Ya está REFUNDED' });
+            return reply.code(400).send({ error: 'Ya estÃ¡ REFUNDED' });
         const amount = typeof amountUsd === 'number' && isFinite(amountUsd) && amountUsd > 0 ? Number(amountUsd.toFixed(2)) : Number(payment.amountUsd);
         if (payment.provider === 'Stripe' && payment.externalId) {
             const { getStripe } = require('../../services/stripe.service');
@@ -166,7 +166,7 @@ async function paymentRoutes(app) {
                 }
             }
             catch (e) {
-                return reply.code(400).send({ error: 'Stripe refund/cancel falló' });
+                return reply.code(400).send({ error: 'Stripe refund/cancel fallÃ³' });
             }
         }
         else {
@@ -176,7 +176,7 @@ async function paymentRoutes(app) {
         }
         return reply.send({ ok: true });
     });
-    app.get('/payments/:tripId', { schema: { tags: ['payments'], summary: 'Obtener pago por tripId', description: 'Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueño del viaje o ADMIN.', params: idParamSchema, response: { 200: paymentSchema, 403: errorSchema, 404: errorSchema } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
+    app.get('/payments/:tripId', { schema: { operationId: 'paymentsGetByTrip', tags: ['payments'], summary: 'Obtener pago por tripId', description: 'Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.', params: idParamSchema, response: { 200: paymentSchema, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } }, 404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Payment no encontrado' } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
         const user = req.user;
         const tripId = req.params.tripId;
         const trip = await prisma_1.default.trip.findUnique({ where: { id: tripId }, select: { id: true, riderId: true, driverId: true } });
@@ -224,9 +224,14 @@ async function paymentRoutes(app) {
                 },
             },
         },
+        example: {
+            items: [
+                { id: 're_1', paymentId: 'pay_1', tripId: 'trp_1', amountUsd: 1.5, reason: 'admin_refund', provider: 'Stripe', externalId: 're_123', createdAt: '2025-01-01T12:00:00.000Z' }
+            ]
+        }
     };
     // GET /payments/:tripId/receipt (RIDER/DRIVER/ADMIN)
-    app.get('/payments/:tripId/receipt', { schema: { tags: ['payments'], summary: 'Obtener recibo', description: 'Recibo simple del pago asociado al viaje. type=TRIP o CANCELLATION_FEE.', params: idParamSchema, response: { 200: { type: 'object', properties: { tripId: { type: 'string' }, amountUsd: { type: 'number' }, currency: { type: 'string' }, method: { type: 'string' }, status: { type: 'string' }, provider: { type: 'string', nullable: true }, type: { type: 'string', enum: ['TRIP', 'CANCELLATION_FEE'] }, paidAt: { type: 'string', format: 'date-time', nullable: true } }, example: { tripId: 'trp_123', amountUsd: 2.0, currency: 'USD', method: 'CARD', status: 'PAID', provider: 'Stripe', type: 'CANCELLATION_FEE', paidAt: '2025-01-01T12:00:00.000Z' } }, 404: errorSchema } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
+    app.get('/payments/:tripId/receipt', { schema: { operationId: 'paymentsReceiptByTrip', tags: ['payments'], summary: 'Obtener recibo', description: 'Recibo simple del pago asociado al viaje. type=TRIP o CANCELLATION_FEE.', params: idParamSchema, response: { 200: { type: 'object', properties: { tripId: { type: 'string' }, amountUsd: { type: 'number' }, currency: { type: 'string' }, method: { type: 'string' }, status: { type: 'string' }, provider: { type: 'string', nullable: true }, type: { type: 'string', enum: ['TRIP', 'CANCELLATION_FEE'] }, paidAt: { type: 'string', format: 'date-time', nullable: true } }, example: { tripId: 'trp_123', amountUsd: 2.0, currency: 'USD', method: 'CARD', status: 'PAID', provider: 'Stripe', type: 'CANCELLATION_FEE', paidAt: '2025-01-01T12:00:00.000Z' } }, 404: errorSchema } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
         const tripId = req.params.tripId;
         const payment = await prisma_1.default.payment.findUnique({ where: { tripId } });
         if (!payment)
@@ -245,7 +250,7 @@ async function paymentRoutes(app) {
             paidAt: payment.status === 'PAID' ? payment.updatedAt : null,
         });
     });
-    app.get('/payments/:tripId/refunds', { schema: { tags: ['payments'], summary: 'Refunds por tripId', description: 'Lista auditorías de reembolso/cancelación del pago de un trip. Requiere JWT y ser dueño del viaje o ADMIN.', params: idParamSchema, response: { 200: refundsResponse, 403: errorSchema, 404: errorSchema } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
+    app.get('/payments/:tripId/refunds', { schema: { operationId: 'paymentsRefundsByTrip', tags: ['payments'], summary: 'Refunds por tripId', description: 'Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.', params: idParamSchema, response: { 200: refundsResponse, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } }, 404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Trip no encontrado' } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
         const user = req.user;
         const { tripId } = req.params;
         const trip = await prisma_1.default.trip.findUnique({ where: { id: tripId }, select: { riderId: true, driverId: true } });
@@ -285,7 +290,7 @@ async function paymentRoutes(app) {
             createdAt: { type: 'string', format: 'date-time' },
         },
     };
-    app.get('/admin/refunds', { schema: { tags: ['payments'], summary: 'Listar refunds (ADMIN)', description: 'Lista auditorías de reembolso/cancelación con filtros y CSV.', querystring: refundListQuery, response: { 200: { type: 'object', properties: { items: { type: 'array', items: refundItemSchema }, nextCursor: { type: 'string', nullable: true } } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
+    app.get('/admin/refunds', { schema: { operationId: 'adminRefundsList', tags: ['payments'], summary: 'Listar refunds (ADMIN)', description: 'Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.', querystring: refundListQuery, response: { 200: { content: { 'application/json': { schema: { type: 'object', properties: { items: { type: 'array', items: refundItemSchema }, nextCursor: { type: 'string', nullable: true } } } }, 'text/csv': { schema: { type: 'string', example: 'id,paymentId,tripId,amountUsd,reason,provider,externalId,createdAt\n"re_1","pay_1","trp_1",1.5,"admin_refund","Stripe","re_123","2025-01-01T12:00:00.000Z"\n' } } } } } }, preHandler: app.auth.requireRole('ADMIN') }, async (req, reply) => {
         const { userId, city, from, to, limit = 50, cursor, format = 'json' } = req.query;
         const where = {};
         if (from || to)

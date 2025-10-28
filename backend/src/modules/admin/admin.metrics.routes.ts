@@ -1,4 +1,4 @@
-// src/modules/admin/admin.metrics.routes.ts
+﻿// src/modules/admin/admin.metrics.routes.ts
 import type { FastifyInstance } from 'fastify'
 import { getMetricsText } from '../../services/metrics.prom'
 import { env } from '../../config/env'
@@ -6,7 +6,7 @@ import { env } from '../../config/env'
 export default async function adminMetricsRoutes(app: FastifyInstance) {
   app.get(
     '/admin/metrics',
-    { schema: { tags: ['admin'], summary: 'Prometheus metrics', description: 'Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.' }, preHandler: app.auth.requireRole('ADMIN') },
+    { schema: { operationId: 'adminMetrics', tags: ['admin'], summary: 'Prometheus metrics', description: 'ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.' }, preHandler: app.auth.requireRole('ADMIN') },
     async (_req, reply) => {
       const text = await getMetricsText()
       reply.header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
@@ -18,7 +18,7 @@ export default async function adminMetricsRoutes(app: FastifyInstance) {
   // If METRICS_TOKEN is set, it must be provided as header `x-metrics-token`.
   app.get(
     '/metrics',
-    { schema: { tags: ['admin'], summary: 'Prometheus metrics (public)', description: 'Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.', security: [] } },
+    { schema: { operationId: 'metricsPublic', tags: ['admin'], summary: 'Prometheus metrics (public)', description: 'Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.', security: [] } },
     async (req, reply) => {
       if (!env.metricsPublic || env.metricsToken) {
         const tokHeader = (req.headers['x-metrics-token'] as string) || ''
@@ -35,3 +35,4 @@ export default async function adminMetricsRoutes(app: FastifyInstance) {
     }
   )
 }
+

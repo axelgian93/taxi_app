@@ -14,7 +14,7 @@ async function stripeWebhookRoutes(app) {
         return;
     }
     // Assumes a raw-body parser is provided by a parent scope (webhooks-raw plugin)
-    app.post('/stripe', { schema: { tags: ['payments'], summary: 'Stripe webhook', security: [] } }, async (req, reply) => {
+    app.post('/stripe', { schema: { operationId: 'webhooksStripe', tags: ['payments'], summary: 'Stripe webhook', security: [] } }, async (req, reply) => {
         const sig = req.headers['stripe-signature'] || '';
         let event;
         try {

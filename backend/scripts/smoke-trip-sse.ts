@@ -45,7 +45,16 @@ async function main() {
     await post('/drivers/status', driver.token, { status: 'IDLE' })
 
     console.log('Requesting a new trip...')
-    const reqBody = { pickupLat: -2.170, pickupLng: -79.922, dropoffLat: -2.190, dropoffLng: -79.890, city: 'Guayaquil' }
+    const reqBody = {
+      pickupLat: -2.170,
+      pickupLng: -79.922,
+      dropoffLat: -2.190,
+      dropoffLng: -79.890,
+      city: 'Guayaquil',
+      distanceKm: 3.2,
+      durationMin: 10,
+      preferredMethod: 'CASH'
+    }
     const created = await post<{ ok: boolean; trip: { id: string } }>(`/trips/request`, rider.token, reqBody)
     tripId = created.trip.id
     console.log('Trip created:', tripId)
@@ -91,4 +100,3 @@ main().catch((e) => {
   console.error('Smoke trip sse failed:', e)
   process.exit(1)
 })
-

@@ -83,11 +83,67 @@ async function driverRoutes(app) {
         additionalProperties: false,
     };
     const responseOk = {
-        200: { type: 'object', properties: { ok: { type: 'boolean' } } },
+        200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } },
+        401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }
     };
     // /drivers/status (original)
-    app.post('/drivers/status', { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
+    app.post('/drivers/status', { schema: { operationId: 'driverUpdateStatus', tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
     // /drivers/location (alias que usa el smoke)
-    app.post('/drivers/location', { schema: { tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
+    app.post('/drivers/location', { schema: { operationId: 'driverUpdateLocation', tags: ['drivers'], summary: 'Actualizar estado del driver', description: 'Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.', body: bodySchema, response: responseOk }, preHandler: app.auth.verifyJWT }, (req, reply) => handleReport(app, req, reply));
+    // Lista de viajes activos asignados al driver actual
+    app.get('/drivers/my-trips/active', {
+        schema: {
+            operationId: 'driverMyTripsActive',
+            tags: ['drivers'],
+            summary: 'Mis viajes activos',
+            description: 'Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.',
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        items: {
+                            type: 'array',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    id: { type: 'string' },
+                                    status: { type: 'string', enum: ['ACCEPTED', 'ARRIVED', 'STARTED'] },
+                                    pickupLat: { type: 'number' },
+                                    pickupLng: { type: 'number' },
+                                    dropoffLat: { type: 'number' },
+                                    dropoffLng: { type: 'number' },
+                                    requestedAt: { type: 'string', format: 'date-time' },
+                                    preferredMethod: { type: 'string', enum: ['CASH', 'CARD'], nullable: true },
+                                }
+                            }
+                        }
+                    },
+                    example: { items: [{ id: 'trp_123', status: 'ACCEPTED', pickupLat: -2.17, pickupLng: -79.92, dropoffLat: -2.19, dropoffLng: -79.89, requestedAt: '2025-01-01T12:00:00.000Z', preferredMethod: 'CARD' }] }
+                },
+                401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } },
+                403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } },
+            }
+        },
+        preHandler: app.auth.requireRole('DRIVER')
+    }, async (req, reply) => {
+        const userId = req.user?.id;
+        const rows = await prisma_1.default.trip.findMany({
+            where: { driverId: userId, status: { in: ['ACCEPTED', 'ARRIVED', 'STARTED'] } },
+            orderBy: { requestedAt: 'desc' },
+            take: 20,
+            select: { id: true, status: true, pickupLat: true, pickupLng: true, dropoffLat: true, dropoffLng: true, requestedAt: true, pricingSnapshot: true }
+        });
+        const items = rows.map((r) => ({
+            id: r.id,
+            status: r.status,
+            pickupLat: Number(r.pickupLat),
+            pickupLng: Number(r.pickupLng),
+            dropoffLat: Number(r.dropoffLat),
+            dropoffLng: Number(r.dropoffLng),
+            requestedAt: r.requestedAt,
+            preferredMethod: r.pricingSnapshot?.preferredMethod ?? null,
+        }));
+        return reply.send({ items });
+    });
 }
 //# sourceMappingURL=driver.routes.js.map

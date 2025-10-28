@@ -10,11 +10,14 @@ export default async function userRoutes(app: FastifyInstance) {
     additionalProperties: false,
     example: { fcmToken: 'd5x...:APA91bHExampleToken' }
   } as const
-  const okResponse = { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } } } as const
+  const okResponse = {
+    200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } },
+    401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }
+  } as const
 
   app.post(
     '/users/me/push-token',
-    { schema: { tags: ['users'], summary: 'Registrar FCM token', description: 'Registra o actualiza el FCM token del usuario logueado.', body: bodySchema, response: okResponse }, preHandler: app.auth.verifyJWT },
+    { schema: { operationId: 'usersRegisterPushToken', tags: ['users'], summary: 'Registrar FCM token', description: 'Registra o actualiza el FCM token del usuario logueado.', body: bodySchema, response: okResponse }, preHandler: app.auth.verifyJWT },
     async (req: any, reply) => {
       const userId = req.user?.id as string
       const { fcmToken } = req.body as { fcmToken: string }
@@ -25,7 +28,7 @@ export default async function userRoutes(app: FastifyInstance) {
 
   app.delete(
     '/users/me/push-token',
-    { schema: { tags: ['users'], summary: 'Eliminar FCM token', description: 'Borra el FCM token asociado al usuario (logout de push notifications).', response: okResponse }, preHandler: app.auth.verifyJWT },
+    { schema: { operationId: 'usersDeletePushToken', tags: ['users'], summary: 'Eliminar FCM token', description: 'Borra el FCM token asociado al usuario (logout de push notifications).', response: okResponse }, preHandler: app.auth.verifyJWT },
     async (req: any, reply) => {
       const userId = req.user?.id as string
       await prisma.user.update({ where: { id: userId }, data: { fcmToken: null } })
