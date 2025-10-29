@@ -1,7 +1,8 @@
 ﻿// src/modules/drivers/driver.routes.ts
 import type { FastifyInstance } from 'fastify'
-import prisma from '../../lib/prisma'
 import type { $Enums } from '@prisma/client'
+
+import prisma from '../../lib/prisma'
 
 type BodyReport = {
   lat?: number

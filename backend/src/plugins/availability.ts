@@ -1,5 +1,6 @@
 // src/plugins/availability.ts
 import fp from 'fastify-plugin'
+
 import prisma from '../lib/prisma'
 import { updateCurrentDriversAvailable } from '../services/metrics.service'
 

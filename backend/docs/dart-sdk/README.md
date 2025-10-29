@@ -75,25 +75,23 @@ Class | Method | HTTP request | Description
 [*AuthApi*](doc/AuthApi.md) | [**authMe**](doc/AuthApi.md#authme) | **GET** /auth/me | 
 [*AuthApi*](doc/AuthApi.md) | [**authRegister**](doc/AuthApi.md#authregister) | **POST** /auth/register | 
 [*DefaultApi*](doc/DefaultApi.md) | [**healthz**](doc/DefaultApi.md#healthz) | **GET** /healthz | 
+[*DriversApi*](doc/DriversApi.md) | [**driverMyTripsActive**](doc/DriversApi.md#drivermytripsactive) | **GET** /drivers/my-trips/active | Mis viajes activos
 [*DriversApi*](doc/DriversApi.md) | [**driverUpdateLocation**](doc/DriversApi.md#driverupdatelocation) | **POST** /drivers/location | Actualizar estado del driver
 [*DriversApi*](doc/DriversApi.md) | [**driverUpdateStatus**](doc/DriversApi.md#driverupdatestatus) | **POST** /drivers/status | Actualizar estado del driver
 [*PaymentsApi*](doc/PaymentsApi.md) | [**adminRefundsList**](doc/PaymentsApi.md#adminrefundslist) | **GET** /admin/refunds | Listar refunds (ADMIN)
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsCaptureByTrip**](doc/PaymentsApi.md#paymentscapturebytrip) | **POST** /payments/{tripId}/capture | Capturar pago autorizado (ADMIN)
-[*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsCreateSetupIntent**](doc/PaymentsApi.md#paymentscreatesetupintent) | **POST** /payments/setup-intent | Crear SetupIntent
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsGetByTrip**](doc/PaymentsApi.md#paymentsgetbytrip) | **GET** /payments/{tripId} | Obtener pago por tripId
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsList**](doc/PaymentsApi.md#paymentslist) | **GET** /payments | Listar pagos (ADMIN)
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsReceiptByTrip**](doc/PaymentsApi.md#paymentsreceiptbytrip) | **GET** /payments/{tripId}/receipt | Obtener recibo
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsRefundByTrip**](doc/PaymentsApi.md#paymentsrefundbytrip) | **POST** /payments/{tripId}/refund | Refund/cancel (ADMIN)
 [*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsRefundsByTrip**](doc/PaymentsApi.md#paymentsrefundsbytrip) | **GET** /payments/{tripId}/refunds | Refunds por tripId
-[*PaymentsApi*](doc/PaymentsApi.md) | [**paymentsSetDefaultMethod**](doc/PaymentsApi.md#paymentssetdefaultmethod) | **POST** /payments/set-default | Definir PM por defecto
-[*PaymentsApi*](doc/PaymentsApi.md) | [**webhooksStripe**](doc/PaymentsApi.md#webhooksstripe) | **POST** /webhooks/stripe | Stripe webhook
-[*TripsApi*](doc/TripsApi.md) | [**tripsAccept**](doc/TripsApi.md#tripsaccept) | **POST** /trips/{id}/accept | 
-[*TripsApi*](doc/TripsApi.md) | [**tripsArrived**](doc/TripsApi.md#tripsarrived) | **POST** /trips/{id}/arrived | 
-[*TripsApi*](doc/TripsApi.md) | [**tripsCancel**](doc/TripsApi.md#tripscancel) | **POST** /trips/{id}/cancel | 
-[*TripsApi*](doc/TripsApi.md) | [**tripsComplete**](doc/TripsApi.md#tripscomplete) | **POST** /trips/{id}/complete | 
+[*TripsApi*](doc/TripsApi.md) | [**tripsAccept**](doc/TripsApi.md#tripsaccept) | **POST** /trips/{id}/accept | Aceptar viaje
+[*TripsApi*](doc/TripsApi.md) | [**tripsArrived**](doc/TripsApi.md#tripsarrived) | **POST** /trips/{id}/arrived | Arribo del conductor
+[*TripsApi*](doc/TripsApi.md) | [**tripsCancel**](doc/TripsApi.md#tripscancel) | **POST** /trips/{id}/cancel | Cancelar viaje (rider)
+[*TripsApi*](doc/TripsApi.md) | [**tripsComplete**](doc/TripsApi.md#tripscomplete) | **POST** /trips/{id}/complete | Completar viaje
 [*TripsApi*](doc/TripsApi.md) | [**tripsRequest**](doc/TripsApi.md#tripsrequest) | **POST** /trips/request | Solicitar viaje
 [*TripsApi*](doc/TripsApi.md) | [**tripsSseById**](doc/TripsApi.md#tripsssebyid) | **GET** /trips/{id}/sse | Trip live updates (SSE)
-[*TripsApi*](doc/TripsApi.md) | [**tripsStart**](doc/TripsApi.md#tripsstart) | **POST** /trips/{id}/start | 
+[*TripsApi*](doc/TripsApi.md) | [**tripsStart**](doc/TripsApi.md#tripsstart) | **POST** /trips/{id}/start | Iniciar viaje
 [*UsersApi*](doc/UsersApi.md) | [**usersDeletePushToken**](doc/UsersApi.md#usersdeletepushtoken) | **DELETE** /users/me/push-token | Eliminar FCM token
 [*UsersApi*](doc/UsersApi.md) | [**usersRegisterPushToken**](doc/UsersApi.md#usersregisterpushtoken) | **POST** /users/me/push-token | Registrar FCM token
 
@@ -116,21 +114,27 @@ Class | Method | HTTP request | Description
  - [AuthRegister201ResponseUser](doc/AuthRegister201ResponseUser.md)
  - [AuthRegister400Response](doc/AuthRegister400Response.md)
  - [AuthRegisterRequest](doc/AuthRegisterRequest.md)
+ - [DriverMyTripsActive200Response](doc/DriverMyTripsActive200Response.md)
+ - [DriverMyTripsActive200ResponseItemsInner](doc/DriverMyTripsActive200ResponseItemsInner.md)
+ - [DriverMyTripsActive403Response](doc/DriverMyTripsActive403Response.md)
  - [DriverUpdateStatus200Response](doc/DriverUpdateStatus200Response.md)
+ - [DriverUpdateStatus401Response](doc/DriverUpdateStatus401Response.md)
  - [DriverUpdateStatusRequest](doc/DriverUpdateStatusRequest.md)
- - [PaymentsCreateSetupIntent200Response](doc/PaymentsCreateSetupIntent200Response.md)
+ - [PaymentsCaptureByTrip400Response](doc/PaymentsCaptureByTrip400Response.md)
+ - [PaymentsCaptureByTrip404Response](doc/PaymentsCaptureByTrip404Response.md)
  - [PaymentsList200Response](doc/PaymentsList200Response.md)
  - [PaymentsList200ResponseItemsInner](doc/PaymentsList200ResponseItemsInner.md)
  - [PaymentsReceiptByTrip200Response](doc/PaymentsReceiptByTrip200Response.md)
  - [PaymentsRefundByTripRequest](doc/PaymentsRefundByTripRequest.md)
  - [PaymentsRefundsByTrip200Response](doc/PaymentsRefundsByTrip200Response.md)
  - [PaymentsRefundsByTrip200ResponseItemsInner](doc/PaymentsRefundsByTrip200ResponseItemsInner.md)
- - [PaymentsSetDefaultMethodRequest](doc/PaymentsSetDefaultMethodRequest.md)
+ - [PaymentsRefundsByTrip404Response](doc/PaymentsRefundsByTrip404Response.md)
  - [TripsCancelRequest](doc/TripsCancelRequest.md)
  - [TripsRequest200Response](doc/TripsRequest200Response.md)
  - [TripsRequest200ResponseTrip](doc/TripsRequest200ResponseTrip.md)
+ - [TripsRequest400Response](doc/TripsRequest400Response.md)
  - [TripsRequestRequest](doc/TripsRequestRequest.md)
- - [UsersRegisterPushToken200Response](doc/UsersRegisterPushToken200Response.md)
+ - [TripsStartRequest](doc/TripsStartRequest.md)
  - [UsersRegisterPushTokenRequest](doc/UsersRegisterPushTokenRequest.md)
 
 

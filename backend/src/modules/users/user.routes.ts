@@ -1,5 +1,6 @@
 // src/modules/users/user.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import prisma from '../../lib/prisma'
 
 export default async function userRoutes(app: FastifyInstance) {

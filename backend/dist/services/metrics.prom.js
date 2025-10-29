@@ -5,7 +5,6 @@ exports.getMetricsText = getMetricsText;
 const metrics_service_1 = require("./metrics.service");
 let prom = null;
 try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     // @ts-ignore - prom-client is optional at runtime
     prom = require('prom-client');
 }

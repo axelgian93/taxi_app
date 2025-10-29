@@ -1,5 +1,6 @@
 // src/plugins/trip-supervisor.ts
 import fp from 'fastify-plugin'
+
 import prisma from '../lib/prisma'
 import { publishTripEvent } from '../services/events.service'
 import { haversineKm } from '../utils/geo'

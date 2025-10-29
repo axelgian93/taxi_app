@@ -5,8 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendPushToUser = sendPushToUser;
 // src/services/push.service.ts
-const prisma_1 = __importDefault(require("../lib/prisma"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
+const prisma_1 = __importDefault(require("../lib/prisma"));
 async function sendPushToUser(userId, opts) {
     try {
         const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { fcmToken: true, email: true } });

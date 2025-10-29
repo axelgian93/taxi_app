@@ -30,21 +30,27 @@ import 'package:openapi/src/model/auth_register201_response.dart';
 import 'package:openapi/src/model/auth_register201_response_user.dart';
 import 'package:openapi/src/model/auth_register400_response.dart';
 import 'package:openapi/src/model/auth_register_request.dart';
+import 'package:openapi/src/model/driver_my_trips_active200_response.dart';
+import 'package:openapi/src/model/driver_my_trips_active200_response_items_inner.dart';
+import 'package:openapi/src/model/driver_my_trips_active403_response.dart';
 import 'package:openapi/src/model/driver_update_status200_response.dart';
+import 'package:openapi/src/model/driver_update_status401_response.dart';
 import 'package:openapi/src/model/driver_update_status_request.dart';
-import 'package:openapi/src/model/payments_create_setup_intent200_response.dart';
+import 'package:openapi/src/model/payments_capture_by_trip400_response.dart';
+import 'package:openapi/src/model/payments_capture_by_trip404_response.dart';
 import 'package:openapi/src/model/payments_list200_response.dart';
 import 'package:openapi/src/model/payments_list200_response_items_inner.dart';
 import 'package:openapi/src/model/payments_receipt_by_trip200_response.dart';
 import 'package:openapi/src/model/payments_refund_by_trip_request.dart';
 import 'package:openapi/src/model/payments_refunds_by_trip200_response.dart';
 import 'package:openapi/src/model/payments_refunds_by_trip200_response_items_inner.dart';
-import 'package:openapi/src/model/payments_set_default_method_request.dart';
+import 'package:openapi/src/model/payments_refunds_by_trip404_response.dart';
 import 'package:openapi/src/model/trips_cancel_request.dart';
 import 'package:openapi/src/model/trips_request200_response.dart';
 import 'package:openapi/src/model/trips_request200_response_trip.dart';
+import 'package:openapi/src/model/trips_request400_response.dart';
 import 'package:openapi/src/model/trips_request_request.dart';
-import 'package:openapi/src/model/users_register_push_token200_response.dart';
+import 'package:openapi/src/model/trips_start_request.dart';
 import 'package:openapi/src/model/users_register_push_token_request.dart';
 
 part 'serializers.g.dart';
@@ -66,21 +72,27 @@ part 'serializers.g.dart';
   AuthRegister201ResponseUser,
   AuthRegister400Response,
   AuthRegisterRequest,
+  DriverMyTripsActive200Response,
+  DriverMyTripsActive200ResponseItemsInner,
+  DriverMyTripsActive403Response,
   DriverUpdateStatus200Response,
+  DriverUpdateStatus401Response,
   DriverUpdateStatusRequest,
-  PaymentsCreateSetupIntent200Response,
+  PaymentsCaptureByTrip400Response,
+  PaymentsCaptureByTrip404Response,
   PaymentsList200Response,
   PaymentsList200ResponseItemsInner,
   PaymentsReceiptByTrip200Response,
   PaymentsRefundByTripRequest,
   PaymentsRefundsByTrip200Response,
   PaymentsRefundsByTrip200ResponseItemsInner,
-  PaymentsSetDefaultMethodRequest,
+  PaymentsRefundsByTrip404Response,
   TripsCancelRequest,
   TripsRequest200Response,
   TripsRequest200ResponseTrip,
+  TripsRequest400Response,
   TripsRequestRequest,
-  UsersRegisterPushToken200Response,
+  TripsStartRequest,
   UsersRegisterPushTokenRequest,
 ])
 Serializers serializers = (_$serializers.toBuilder()

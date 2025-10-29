@@ -40,7 +40,7 @@ async function main() {
     console.log('STRIPE_SECRET_KEY no definido; omitiendo smoke Stripe.')
     return
   }
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   const Stripe = require('stripe')
   const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' })
 

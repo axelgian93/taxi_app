@@ -1,5 +1,6 @@
 // src/modules/payments/payment.setup.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import prisma from '../../lib/prisma'
 import { getStripe } from '../../services/stripe.service'
 

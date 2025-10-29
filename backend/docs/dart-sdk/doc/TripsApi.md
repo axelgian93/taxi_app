@@ -9,19 +9,21 @@ All URIs are relative to *http://localhost:8080*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**tripsAccept**](TripsApi.md#tripsaccept) | **POST** /trips/{id}/accept | 
-[**tripsArrived**](TripsApi.md#tripsarrived) | **POST** /trips/{id}/arrived | 
-[**tripsCancel**](TripsApi.md#tripscancel) | **POST** /trips/{id}/cancel | 
-[**tripsComplete**](TripsApi.md#tripscomplete) | **POST** /trips/{id}/complete | 
+[**tripsAccept**](TripsApi.md#tripsaccept) | **POST** /trips/{id}/accept | Aceptar viaje
+[**tripsArrived**](TripsApi.md#tripsarrived) | **POST** /trips/{id}/arrived | Arribo del conductor
+[**tripsCancel**](TripsApi.md#tripscancel) | **POST** /trips/{id}/cancel | Cancelar viaje (rider)
+[**tripsComplete**](TripsApi.md#tripscomplete) | **POST** /trips/{id}/complete | Completar viaje
 [**tripsRequest**](TripsApi.md#tripsrequest) | **POST** /trips/request | Solicitar viaje
 [**tripsSseById**](TripsApi.md#tripsssebyid) | **GET** /trips/{id}/sse | Trip live updates (SSE)
-[**tripsStart**](TripsApi.md#tripsstart) | **POST** /trips/{id}/start | 
+[**tripsStart**](TripsApi.md#tripsstart) | **POST** /trips/{id}/start | Iniciar viaje
 
 
 # **tripsAccept**
 > TripsRequest200Response tripsAccept(id)
 
+Aceptar viaje
 
+El conductor acepta el viaje asignado.
 
 ### Example
 ```dart
@@ -62,7 +64,9 @@ Name | Type | Description  | Notes
 # **tripsArrived**
 > TripsRequest200Response tripsArrived(id)
 
+Arribo del conductor
 
+El conductor llega al punto de recogida.
 
 ### Example
 ```dart
@@ -103,7 +107,9 @@ Name | Type | Description  | Notes
 # **tripsCancel**
 > TripsRequest200Response tripsCancel(id, tripsCancelRequest)
 
+Cancelar viaje (rider)
 
+El rider cancela el viaje; puede aplicar fee segÃºn estado y reglas.
 
 ### Example
 ```dart
@@ -146,7 +152,9 @@ Name | Type | Description  | Notes
 # **tripsComplete**
 > TripsRequest200Response tripsComplete(id)
 
+Completar viaje
 
+Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
 
 ### Example
 ```dart
@@ -189,7 +197,7 @@ Name | Type | Description  | Notes
 
 Solicitar viaje
 
-Crea un viaje y asigna el conductor disponible más cercano.
+Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
 
 ### Example
 ```dart
@@ -232,7 +240,7 @@ Name | Type | Description  | Notes
 
 Trip live updates (SSE)
 
-Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
 
 ### Example
 ```dart
@@ -271,9 +279,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsStart**
-> TripsRequest200Response tripsStart(id)
+> TripsRequest200Response tripsStart(id, tripsStartRequest)
 
+Iniciar viaje
 
+Inicia el viaje; si method=CARD y Stripe estÃ¡ configurado, preautoriza.
 
 ### Example
 ```dart
@@ -281,9 +291,10 @@ import 'package:openapi/api.dart';
 
 final api = Openapi().getTripsApi();
 final String id = id_example; // String | 
+final TripsStartRequest tripsStartRequest = ; // TripsStartRequest | 
 
 try {
-    final response = api.tripsStart(id);
+    final response = api.tripsStart(id, tripsStartRequest);
     print(response);
 } catch on DioException (e) {
     print('Exception when calling TripsApi->tripsStart: $e\n');
@@ -295,6 +306,7 @@ try {
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **id** | **String**|  | 
+ **tripsStartRequest** | [**TripsStartRequest**](TripsStartRequest.md)|  | [optional] 
 
 ### Return type
 
@@ -306,7 +318,7 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

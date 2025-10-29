@@ -14,7 +14,6 @@ import availabilityPlugin from './plugins/availability'
 import tripSupervisorPlugin from './plugins/trip-supervisor'
 import opIdsPlugin from './plugins/operation-ids'
 import webhooksRawPlugin from './plugins/webhooks-raw'
-
 // Rutas
 import authRoutes from './modules/auth/auth.routes'
 import driverRoutes from './modules/drivers/driver.routes'

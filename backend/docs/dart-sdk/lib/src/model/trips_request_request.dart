@@ -3,6 +3,7 @@
 //
 
 // ignore_for_file: unused_element
+import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -20,6 +21,7 @@ part 'trips_request_request.g.dart';
 /// * [dropoffAddress] 
 /// * [distanceKm] 
 /// * [durationMin] 
+/// * [preferredMethod] 
 @BuiltValue()
 abstract class TripsRequestRequest implements Built<TripsRequestRequest, TripsRequestRequestBuilder> {
   @BuiltValueField(wireName: r'city')
@@ -48,6 +50,10 @@ abstract class TripsRequestRequest implements Built<TripsRequestRequest, TripsRe
 
   @BuiltValueField(wireName: r'durationMin')
   num get durationMin;
+
+  @BuiltValueField(wireName: r'preferredMethod')
+  TripsRequestRequestPreferredMethodEnum? get preferredMethod;
+  // enum preferredMethodEnum {  CASH,  CARD,  };
 
   TripsRequestRequest._();
 
@@ -121,6 +127,13 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
       object.durationMin,
       specifiedType: const FullType(num),
     );
+    if (object.preferredMethod != null) {
+      yield r'preferredMethod';
+      yield serializers.serialize(
+        object.preferredMethod,
+        specifiedType: const FullType(TripsRequestRequestPreferredMethodEnum),
+      );
+    }
   }
 
   @override
@@ -207,6 +220,13 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
           ) as num;
           result.durationMin = valueDes;
           break;
+        case r'preferredMethod':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(TripsRequestRequestPreferredMethodEnum),
+          ) as TripsRequestRequestPreferredMethodEnum;
+          result.preferredMethod = valueDes;
+          break;
         default:
           unhandled.add(key);
           unhandled.add(value);
@@ -234,5 +254,20 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
     );
     return result.build();
   }
+}
+
+class TripsRequestRequestPreferredMethodEnum extends EnumClass {
+
+  @BuiltValueEnumConst(wireName: r'CASH')
+  static const TripsRequestRequestPreferredMethodEnum CASH = _$tripsRequestRequestPreferredMethodEnum_CASH;
+  @BuiltValueEnumConst(wireName: r'CARD')
+  static const TripsRequestRequestPreferredMethodEnum CARD = _$tripsRequestRequestPreferredMethodEnum_CARD;
+
+  static Serializer<TripsRequestRequestPreferredMethodEnum> get serializer => _$tripsRequestRequestPreferredMethodEnumSerializer;
+
+  const TripsRequestRequestPreferredMethodEnum._(String name): super(name);
+
+  static BuiltSet<TripsRequestRequestPreferredMethodEnum> get values => _$tripsRequestRequestPreferredMethodEnumValues;
+  static TripsRequestRequestPreferredMethodEnum valueOf(String name) => _$tripsRequestRequestPreferredMethodEnumValueOf(name);
 }
 

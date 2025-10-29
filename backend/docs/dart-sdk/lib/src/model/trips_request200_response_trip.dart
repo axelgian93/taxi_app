@@ -3,7 +3,6 @@
 //
 
 // ignore_for_file: unused_element
-import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -20,8 +19,7 @@ abstract class TripsRequest200ResponseTrip implements Built<TripsRequest200Respo
   String? get id;
 
   @BuiltValueField(wireName: r'status')
-  TripsRequest200ResponseTripStatusEnum? get status;
-  // enum statusEnum {  ASSIGNED,  ACCEPTED,  ARRIVED,  ONGOING,  COMPLETED,  CANCELED,  };
+  String? get status;
 
   TripsRequest200ResponseTrip._();
 
@@ -57,7 +55,7 @@ class _$TripsRequest200ResponseTripSerializer implements PrimitiveSerializer<Tri
       yield r'status';
       yield serializers.serialize(
         object.status,
-        specifiedType: const FullType(TripsRequest200ResponseTripStatusEnum),
+        specifiedType: const FullType(String),
       );
     }
   }
@@ -93,8 +91,8 @@ class _$TripsRequest200ResponseTripSerializer implements PrimitiveSerializer<Tri
         case r'status':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(TripsRequest200ResponseTripStatusEnum),
-          ) as TripsRequest200ResponseTripStatusEnum;
+            specifiedType: const FullType(String),
+          ) as String;
           result.status = valueDes;
           break;
         default:
@@ -124,28 +122,5 @@ class _$TripsRequest200ResponseTripSerializer implements PrimitiveSerializer<Tri
     );
     return result.build();
   }
-}
-
-class TripsRequest200ResponseTripStatusEnum extends EnumClass {
-
-  @BuiltValueEnumConst(wireName: r'ASSIGNED')
-  static const TripsRequest200ResponseTripStatusEnum ASSIGNED = _$tripsRequest200ResponseTripStatusEnum_ASSIGNED;
-  @BuiltValueEnumConst(wireName: r'ACCEPTED')
-  static const TripsRequest200ResponseTripStatusEnum ACCEPTED = _$tripsRequest200ResponseTripStatusEnum_ACCEPTED;
-  @BuiltValueEnumConst(wireName: r'ARRIVED')
-  static const TripsRequest200ResponseTripStatusEnum ARRIVED = _$tripsRequest200ResponseTripStatusEnum_ARRIVED;
-  @BuiltValueEnumConst(wireName: r'ONGOING')
-  static const TripsRequest200ResponseTripStatusEnum ONGOING = _$tripsRequest200ResponseTripStatusEnum_ONGOING;
-  @BuiltValueEnumConst(wireName: r'COMPLETED')
-  static const TripsRequest200ResponseTripStatusEnum COMPLETED = _$tripsRequest200ResponseTripStatusEnum_COMPLETED;
-  @BuiltValueEnumConst(wireName: r'CANCELED')
-  static const TripsRequest200ResponseTripStatusEnum CANCELED = _$tripsRequest200ResponseTripStatusEnum_CANCELED;
-
-  static Serializer<TripsRequest200ResponseTripStatusEnum> get serializer => _$tripsRequest200ResponseTripStatusEnumSerializer;
-
-  const TripsRequest200ResponseTripStatusEnum._(String name): super(name);
-
-  static BuiltSet<TripsRequest200ResponseTripStatusEnum> get values => _$tripsRequest200ResponseTripStatusEnumValues;
-  static TripsRequest200ResponseTripStatusEnum valueOf(String name) => _$tripsRequest200ResponseTripStatusEnumValueOf(name);
 }
 

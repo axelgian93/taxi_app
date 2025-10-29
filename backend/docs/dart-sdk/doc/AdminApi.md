@@ -62,7 +62,7 @@ This endpoint does not need any parameter.
 
 Prometheus metrics
 
-Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
 
 ### Example
 ```dart
@@ -276,7 +276,7 @@ Name | Type | Description  | Notes
 
 Prometheus metrics (public)
 
-Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
 
 ### Example
 ```dart

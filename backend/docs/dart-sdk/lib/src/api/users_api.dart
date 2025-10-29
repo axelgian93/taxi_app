@@ -8,7 +8,8 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:openapi/src/model/users_register_push_token200_response.dart';
+import 'package:openapi/src/model/driver_update_status200_response.dart';
+import 'package:openapi/src/model/driver_update_status401_response.dart';
 import 'package:openapi/src/model/users_register_push_token_request.dart';
 
 class UsersApi {
@@ -30,9 +31,9 @@ class UsersApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [UsersRegisterPushToken200Response] as data
+  /// Returns a [Future] containing a [Response] with a [DriverUpdateStatus200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<UsersRegisterPushToken200Response>> usersDeletePushToken({ 
+  Future<Response<DriverUpdateStatus200Response>> usersDeletePushToken({ 
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -67,14 +68,14 @@ class UsersApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    UsersRegisterPushToken200Response? _responseData;
+    DriverUpdateStatus200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(UsersRegisterPushToken200Response),
-      ) as UsersRegisterPushToken200Response;
+        specifiedType: const FullType(DriverUpdateStatus200Response),
+      ) as DriverUpdateStatus200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -86,7 +87,7 @@ class UsersApi {
       );
     }
 
-    return Response<UsersRegisterPushToken200Response>(
+    return Response<DriverUpdateStatus200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -110,9 +111,9 @@ class UsersApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [UsersRegisterPushToken200Response] as data
+  /// Returns a [Future] containing a [Response] with a [DriverUpdateStatus200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<UsersRegisterPushToken200Response>> usersRegisterPushToken({ 
+  Future<Response<DriverUpdateStatus200Response>> usersRegisterPushToken({ 
     required UsersRegisterPushTokenRequest usersRegisterPushTokenRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -168,14 +169,14 @@ class UsersApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    UsersRegisterPushToken200Response? _responseData;
+    DriverUpdateStatus200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(UsersRegisterPushToken200Response),
-      ) as UsersRegisterPushToken200Response;
+        specifiedType: const FullType(DriverUpdateStatus200Response),
+      ) as DriverUpdateStatus200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -187,7 +188,7 @@ class UsersApi {
       );
     }
 
-    return Response<UsersRegisterPushToken200Response>(
+    return Response<DriverUpdateStatus200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

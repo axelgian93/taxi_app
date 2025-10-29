@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+
 import { haversineKm } from '../utils/geo.ts';
 
 function isNight(date: Date) {

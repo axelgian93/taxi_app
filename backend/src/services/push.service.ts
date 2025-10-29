@@ -1,6 +1,7 @@
 // src/services/push.service.ts
-import prisma from '../lib/prisma'
 import fetch from 'node-fetch'
+
+import prisma from '../lib/prisma'
 
 type PushData = Record<string, string | number | boolean | null | undefined>
 

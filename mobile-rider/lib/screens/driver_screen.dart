@@ -36,9 +36,14 @@ class _DriverScreenState extends State<DriverScreen> {
   Future<void> _loadTrips() async {
     try {
       final api = ApiClient();
-      final res = await api.dio.get('${api.baseUrl}/drivers/my-trips/active');
-      final data = res.data as Map<String, dynamic>;
-      final items = (data['items'] as List<dynamic>).cast<Map<String, dynamic>>();
+      final res = await api.drivers.driverMyTripsActive();
+      final data = res.data;
+      final items = (data?.items?.toList() ?? const [])
+          .map((e) => {
+                'id': e.id ?? '',
+                'status': e.status ?? '',
+              })
+          .toList();
       if (!mounted) return;
       setState(() { _items = items; });
     } catch (e) {
@@ -98,9 +103,8 @@ class _DriverScreenState extends State<DriverScreen> {
                 value: _payMethod,
                 items: const [
                   DropdownMenuItem(value: 'CASH', child: Text('CASH')),
-                  DropdownMenuItem(value: 'CARD', child: Text('CARD')),
                 ],
-                onChanged: (v){ if (v!=null) setState((){ _payMethod = v; }); },
+                onChanged: (v){ if (v!=null) setState((){ _payMethod = 'CASH'; }); },
               )
             ]),
             const SizedBox(height: 8),

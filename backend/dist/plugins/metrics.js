@@ -8,7 +8,6 @@ const fastify_plugin_1 = __importDefault(require("fastify-plugin"));
 exports.default = (0, fastify_plugin_1.default)(async (app) => {
     let prom;
     try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         prom = require('prom-client');
     }
     catch {

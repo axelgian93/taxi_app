@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-export:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: taxi
+          POSTGRES_PASSWORD: taxi123
+          POSTGRES_DB: taxi_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U taxi -d taxi_app"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DATABASE_URL: postgresql://taxi:taxi123@localhost:5432/taxi_app?schema=taxi_app
+      PORT: 8080
+      JWT_SECRET: ci-secret
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Lint
+        working-directory: backend
+        run: npm run lint
+
+      - name: Prisma generate
+        working-directory: backend
+        run: npx prisma generate --no-engine || npx prisma generate
+
+      - name: Prisma migrate deploy
+        working-directory: backend
+        run: npx prisma migrate deploy
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Start API
+        working-directory: backend
+        run: |
+          nohup node dist/index.js >/dev/null 2>&1 &
+          for i in {1..30}; do curl -fsS http://localhost:8080/healthz && break || sleep 1; done
+
+      - name: Smoke E2E (no Stripe)
+        working-directory: backend
+        env:
+          RIDER_EMAIL: rider@taxi.local
+          DRIVER_EMAIL: driver@taxi.local
+          SMOKE_PASSWORD: 123456
+        run: npm run smoke:e2e
+
+      - name: Export OpenAPI JSON
+        working-directory: backend
+        run: npm run openapi:export
+
+      - name: Generate SDKs (Dart + TS) with Docker
+        working-directory: backend
+        run: |
+          docker run --rm -v "$PWD/docs:/local" openapitools/openapi-generator-cli generate -i /local/openapi.json -g dart-dio -o /local/dart-sdk
+          docker run --rm -v "$PWD/docs:/local" openapitools/openapi-generator-cli generate -i /local/openapi.json -g typescript-axios -o /local/ts-sdk
+
+      - name: Upload OpenAPI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi.json
+          path: backend/docs/openapi.json
+
+      - name: Upload Dart SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-sdk
+          path: backend/docs/dart-sdk
+
+      - name: Upload TS SDK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-sdk
+          path: backend/docs/ts-sdk
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    needs: build-and-export
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: taxi
+          POSTGRES_PASSWORD: taxi123
+          POSTGRES_DB: taxi_app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U taxi -d taxi_app"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: local/taxi-api:test
+
+      - name: Run container
+        run: |
+          docker run -d --name taxi_api_ci \
+            -e DATABASE_URL=postgresql://taxi:taxi123@localhost:5432/taxi_app?schema=taxi_app \
+            -e PORT=8080 \
+            -e JWT_SECRET=ci-secret \
+            -p 8080:8080 \
+            --network host \
+            local/taxi-api:test
+          for i in {1..30}; do curl -fsS http://localhost:8080/healthz && break || sleep 1; done
+          curl -fsS http://localhost:8080/healthz

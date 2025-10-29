@@ -12,7 +12,9 @@ import 'package:openapi/src/api_util.dart';
 import 'package:openapi/src/model/auth_register400_response.dart';
 import 'package:openapi/src/model/trips_cancel_request.dart';
 import 'package:openapi/src/model/trips_request200_response.dart';
+import 'package:openapi/src/model/trips_request400_response.dart';
 import 'package:openapi/src/model/trips_request_request.dart';
+import 'package:openapi/src/model/trips_start_request.dart';
 
 class TripsApi {
 
@@ -22,8 +24,8 @@ class TripsApi {
 
   const TripsApi(this._dio, this._serializers);
 
-  /// tripsAccept
-  /// 
+  /// Aceptar viaje
+  /// El conductor acepta el viaje asignado.
   ///
   /// Parameters:
   /// * [id] 
@@ -103,8 +105,8 @@ class TripsApi {
     );
   }
 
-  /// tripsArrived
-  /// 
+  /// Arribo del conductor
+  /// El conductor llega al punto de recogida.
   ///
   /// Parameters:
   /// * [id] 
@@ -184,8 +186,8 @@ class TripsApi {
     );
   }
 
-  /// tripsCancel
-  /// 
+  /// Cancelar viaje (rider)
+  /// El rider cancela el viaje; puede aplicar fee segÃºn estado y reglas.
   ///
   /// Parameters:
   /// * [id] 
@@ -287,8 +289,8 @@ class TripsApi {
     );
   }
 
-  /// tripsComplete
-  /// 
+  /// Completar viaje
+  /// Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
   ///
   /// Parameters:
   /// * [id] 
@@ -369,7 +371,7 @@ class TripsApi {
   }
 
   /// Solicitar viaje
-  /// Crea un viaje y asigna el conductor disponible más cercano.
+  /// Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
   ///
   /// Parameters:
   /// * [tripsRequestRequest] 
@@ -470,7 +472,7 @@ class TripsApi {
   }
 
   /// Trip live updates (SSE)
-  /// Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+  /// Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
   ///
   /// Parameters:
   /// * [id] 
@@ -547,11 +549,12 @@ class TripsApi {
     );
   }
 
-  /// tripsStart
-  /// 
+  /// Iniciar viaje
+  /// Inicia el viaje; si method&#x3D;CARD y Stripe estÃ¡ configurado, preautoriza.
   ///
   /// Parameters:
   /// * [id] 
+  /// * [tripsStartRequest] 
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
   /// * [headers] - Can be used to add additional headers to the request
   /// * [extras] - Can be used to add flags to the request
@@ -563,6 +566,7 @@ class TripsApi {
   /// Throws [DioException] if API call or serialization fails
   Future<Response<TripsRequest200Response>> tripsStart({ 
     required String id,
+    TripsStartRequest? tripsStartRequest,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
     Map<String, dynamic>? extra,
@@ -586,11 +590,31 @@ class TripsApi {
         ],
         ...?extra,
       },
+      contentType: 'application/json',
       validateStatus: validateStatus,
     );
 
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(TripsStartRequest);
+      _bodyData = tripsStartRequest == null ? null : _serializers.serialize(tripsStartRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
     final _response = await _dio.request<Object>(
       _path,
+      data: _bodyData,
       options: _options,
       cancelToken: cancelToken,
       onSendProgress: onSendProgress,

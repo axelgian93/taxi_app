@@ -13,7 +13,8 @@ async function main() {
   const json = await res.text()
   const out = resolve(__dirname, '..', 'docs', 'openapi.json')
   mkdirSync(dirname(out), { recursive: true })
-  writeFileSync(out, json)
+  // Ensure UTF-8 and clean BOM issues on Windows
+  writeFileSync(out, json, { encoding: 'utf8' })
   console.log(`Exported OpenAPI to ${out}`)
 }
 
@@ -21,4 +22,3 @@ main().catch((e) => {
   console.error('export-openapi failed:', e)
   process.exit(1)
 })
-

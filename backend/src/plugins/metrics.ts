@@ -4,7 +4,7 @@ import fp from 'fastify-plugin'
 export default fp(async (app) => {
   let prom: any
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     prom = require('prom-client')
   } catch {
     app.log.warn('prom-client not installed; HTTP metrics disabled')

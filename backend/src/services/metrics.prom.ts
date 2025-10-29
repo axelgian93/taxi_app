@@ -9,7 +9,7 @@ type PromModule = {
 
 let prom: PromModule | null = null
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+   
   // @ts-ignore - prom-client is optional at runtime
   prom = require('prom-client')
 } catch {

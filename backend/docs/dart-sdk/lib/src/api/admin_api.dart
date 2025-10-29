@@ -16,6 +16,8 @@ import 'package:openapi/src/model/admin_tariffs_list200_response_items_inner.dar
 import 'package:openapi/src/model/admin_tariffs_update_by_id_request.dart';
 import 'package:openapi/src/model/admin_trips_list200_response.dart';
 import 'package:openapi/src/model/auth_register400_response.dart';
+import 'package:openapi/src/model/driver_my_trips_active403_response.dart';
+import 'package:openapi/src/model/driver_update_status401_response.dart';
 
 class AdminApi {
 
@@ -105,7 +107,7 @@ class AdminApi {
   }
 
   /// Prometheus metrics
-  /// Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+  /// ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
@@ -538,7 +540,7 @@ class AdminApi {
   }
 
   /// Prometheus metrics (public)
-  /// Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC&#x3D;false.
+  /// Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC&#x3D;false.
   ///
   /// Parameters:
   /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation

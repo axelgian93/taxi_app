@@ -14,7 +14,7 @@ Method | HTTP request | Description
 
 
 # **usersDeletePushToken**
-> UsersRegisterPushToken200Response usersDeletePushToken()
+> DriverUpdateStatus200Response usersDeletePushToken()
 
 Eliminar FCM token
 
@@ -39,7 +39,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**UsersRegisterPushToken200Response**](UsersRegisterPushToken200Response.md)
+[**DriverUpdateStatus200Response**](DriverUpdateStatus200Response.md)
 
 ### Authorization
 
@@ -53,7 +53,7 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **usersRegisterPushToken**
-> UsersRegisterPushToken200Response usersRegisterPushToken(usersRegisterPushTokenRequest)
+> DriverUpdateStatus200Response usersRegisterPushToken(usersRegisterPushTokenRequest)
 
 Registrar FCM token
 
@@ -82,7 +82,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**UsersRegisterPushToken200Response**](UsersRegisterPushToken200Response.md)
+[**DriverUpdateStatus200Response**](DriverUpdateStatus200Response.md)
 
 ### Authorization
 

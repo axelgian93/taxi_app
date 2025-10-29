@@ -1,4 +1,5 @@
 ﻿import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
+
 import prisma from '../../lib/prisma'
 
 const listQuery = {

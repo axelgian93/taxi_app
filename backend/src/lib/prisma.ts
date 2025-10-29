@@ -9,7 +9,7 @@ const logLevels =
 
 // Declaramos la propiedad en globalThis para que TypeScript no se queje
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __prisma__: PrismaClient | undefined
 }
 

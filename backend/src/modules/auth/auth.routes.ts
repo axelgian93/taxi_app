@@ -1,6 +1,7 @@
 ﻿// src/modules/auth/auth.routes.ts
 import type { FastifyInstance } from 'fastify'
 import bcrypt from 'bcrypt'
+
 import prisma from '../../lib/prisma'
 type Role = 'ADMIN' | 'DRIVER' | 'RIDER'
 

@@ -113,9 +113,8 @@ class _RequestScreenState extends State<RequestScreen> {
                 value: _riderMethod,
                 items: const [
                   DropdownMenuItem(value: 'CASH', child: Text('CASH')),
-                  DropdownMenuItem(value: 'CARD', child: Text('CARD')),
                 ],
-                onChanged: (v){ if (v!=null) setState((){ _riderMethod = v; }); },
+                onChanged: (v){ if (v!=null) setState((){ _riderMethod = 'CASH'; }); },
               )
             ]),
             const SizedBox(height: 8),

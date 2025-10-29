@@ -2,6 +2,15 @@ groups:
   - name: taxi-api-alerts
     interval: 30s
     rules:
+      - alert: ApiP95LatencyHigh
+        expr: histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency high (>1s)"
+          description: "API overall p95 latency is {{ $value }}s for 10m"
+
       - alert: PaymentsP95LatencyHigh
         expr: histogram_quantile(0.95, sum by (le) (rate(app_http_request_duration_seconds_bucket{route=~"/payments.*"}[5m]))) > 0.5
         for: 10m
@@ -33,3 +42,29 @@ groups:
           summary: "Stripe webhook 4xx rate high"
           description: "Stripe webhook 4xx responses >0.2 rps for 10m"
 
+      - alert: ApiDown
+        expr: up{job="taxi_api"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API down"
+          description: "No targets for job taxi_api are up for 2 minutes"
+
+      - alert: ApiTargetMissing
+        expr: absent(up{job="taxi_api"})
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API target missing"
+          description: "Prometheus cannot discover any targets for job taxi_api for 2 minutes"
+
+      - alert: ApiRecovered
+        expr: up{job="taxi_api"} == 1 and changes(up{job="taxi_api"}[5m]) > 0
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "API recovered"
+          description: "API is back up and was down within the last 5 minutes"

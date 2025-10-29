@@ -1,5 +1,6 @@
 ﻿// src/modules/payments/payment.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import prisma from '../../lib/prisma'
 
 export default async function paymentRoutes(app: FastifyInstance) {

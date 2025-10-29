@@ -11,14 +11,11 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**adminRefundsList**](PaymentsApi.md#adminrefundslist) | **GET** /admin/refunds | Listar refunds (ADMIN)
 [**paymentsCaptureByTrip**](PaymentsApi.md#paymentscapturebytrip) | **POST** /payments/{tripId}/capture | Capturar pago autorizado (ADMIN)
-[**paymentsCreateSetupIntent**](PaymentsApi.md#paymentscreatesetupintent) | **POST** /payments/setup-intent | Crear SetupIntent
 [**paymentsGetByTrip**](PaymentsApi.md#paymentsgetbytrip) | **GET** /payments/{tripId} | Obtener pago por tripId
 [**paymentsList**](PaymentsApi.md#paymentslist) | **GET** /payments | Listar pagos (ADMIN)
 [**paymentsReceiptByTrip**](PaymentsApi.md#paymentsreceiptbytrip) | **GET** /payments/{tripId}/receipt | Obtener recibo
 [**paymentsRefundByTrip**](PaymentsApi.md#paymentsrefundbytrip) | **POST** /payments/{tripId}/refund | Refund/cancel (ADMIN)
 [**paymentsRefundsByTrip**](PaymentsApi.md#paymentsrefundsbytrip) | **GET** /payments/{tripId}/refunds | Refunds por tripId
-[**paymentsSetDefaultMethod**](PaymentsApi.md#paymentssetdefaultmethod) | **POST** /payments/set-default | Definir PM por defecto
-[**webhooksStripe**](PaymentsApi.md#webhooksstripe) | **POST** /webhooks/stripe | Stripe webhook
 
 
 # **adminRefundsList**
@@ -107,45 +104,6 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**DriverUpdateStatus200Response**](DriverUpdateStatus200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **paymentsCreateSetupIntent**
-> PaymentsCreateSetupIntent200Response paymentsCreateSetupIntent()
-
-Crear SetupIntent
-
-Rider crea un SetupIntent para guardar una tarjeta. Devuelve client_secret.
-
-### Example
-```dart
-import 'package:openapi/api.dart';
-
-final api = Openapi().getPaymentsApi();
-
-try {
-    final response = api.paymentsCreateSetupIntent();
-    print(response);
-} catch on DioException (e) {
-    print('Exception when calling PaymentsApi->paymentsCreateSetupIntent: $e\n');
-}
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-[**PaymentsCreateSetupIntent200Response**](PaymentsCreateSetupIntent200Response.md)
 
 ### Authorization
 
@@ -386,85 +344,6 @@ Name | Type | Description  | Notes
 
  - **Content-Type**: Not defined
  - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **paymentsSetDefaultMethod**
-> DriverUpdateStatus200Response paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest)
-
-Definir PM por defecto
-
-Guarda el paymentMethod como predeterminado en Stripe y DB.
-
-### Example
-```dart
-import 'package:openapi/api.dart';
-
-final api = Openapi().getPaymentsApi();
-final PaymentsSetDefaultMethodRequest paymentsSetDefaultMethodRequest = ; // PaymentsSetDefaultMethodRequest | 
-
-try {
-    final response = api.paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest);
-    print(response);
-} catch on DioException (e) {
-    print('Exception when calling PaymentsApi->paymentsSetDefaultMethod: $e\n');
-}
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **paymentsSetDefaultMethodRequest** | [**PaymentsSetDefaultMethodRequest**](PaymentsSetDefaultMethodRequest.md)|  | 
-
-### Return type
-
-[**DriverUpdateStatus200Response**](DriverUpdateStatus200Response.md)
-
-### Authorization
-
-[bearerAuth](../README.md#bearerAuth)
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **webhooksStripe**
-> webhooksStripe()
-
-Stripe webhook
-
-### Example
-```dart
-import 'package:openapi/api.dart';
-
-final api = Openapi().getPaymentsApi();
-
-try {
-    api.webhooksStripe();
-} catch on DioException (e) {
-    print('Exception when calling PaymentsApi->webhooksStripe: $e\n');
-}
-```
-
-### Parameters
-This endpoint does not need any parameter.
-
-### Return type
-
-void (empty response body)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: Not defined
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

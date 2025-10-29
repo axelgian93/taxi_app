@@ -1,13 +1,16 @@
 ﻿// backend/src/modules/trips/trip.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import prisma from '../../lib/prisma'
 import { subscribeToTrip, publishTripEvent } from '../../services/events.service'
 import { incCounter, incCurrentSse, decCurrentSse } from '../../services/metrics.service'
 import { computeFare } from '../../services/pricing.service'
 import { haversineKm } from '../../utils/haversine'
 import { getStripe } from '../../services/stripe.service'
-import { requestTripBody, errorResponse } from './trip.schemas'
+import { env } from '../../config/env'
 import { sendPushToUser } from '../../services/push.service'
+
+import { requestTripBody, errorResponse } from './trip.schemas'
 
 
 export default async function tripRoutes(app: FastifyInstance) {
@@ -48,7 +51,10 @@ export default async function tripRoutes(app: FastifyInstance) {
           ORDER BY meters ASC
           LIMIT 1
         `
-        if (nearest && nearest.length > 0) return nearest[0].userId
+        if (nearest && nearest.length > 0) {
+          incCounter('matching_postgis')
+          return nearest[0].userId
+        }
       } catch {
         // fallthrough to haversine
       }
@@ -66,6 +72,11 @@ export default async function tripRoutes(app: FastifyInstance) {
       const dKm = haversineKm(pickupLat, pickupLng, Number(c.currentLat as any), Number(c.currentLng as any))
       if (dKm < bestDist) { bestDist = dKm; best = c.userId }
     }
+    if (best) {
+      incCounter('matching_haversine')
+      return best
+    }
+    incCounter('matching_idle_fallback')
     return best
   }
   // POST /trips/request â€” Rider creates a trip and assigns nearest driver
@@ -103,6 +114,7 @@ export default async function tripRoutes(app: FastifyInstance) {
         dropoffAddress: b.dropoffAddress ?? null,
         distanceKm: Number(b.distanceKm) as any,
         durationMin: Number(b.durationMin) || null,
+        city: String(b.city),
         pricingSnapshot: { city: String(b.city), fare, preferredMethod: b.preferredMethod ?? null } as any,
         costUsd: Number(fare.totalUsd) as any,
         currency: 'USD',
@@ -168,13 +180,18 @@ export default async function tripRoutes(app: FastifyInstance) {
       if (user.role !== 'DRIVER' && user.role !== 'ADMIN') return reply.code(403).send({ error: 'Forbidden' })
       const t = await prisma.trip.findUnique({ where: { id }, include: { payment: true, rider: true } })
       if (!t) return reply.code(404).send({ error: 'Trip not found' })
-      // Preauth if CARD and Stripe configured
-      if (payMethod === 'CARD' && !t.payment) {
+      // Preauth if CARD and Stripe configured; block CARD if disabled/absent
+      if (payMethod === 'CARD') {
         const stripe = getStripe()
-        const rider = await prisma.user.findUnique({ where: { id: t.riderId }, select: { stripeCustomerId: true, stripeDefaultPaymentMethodId: true } as any })
-        if (stripe && (rider as any)?.stripeCustomerId) {
+        const allowCard = env.paymentsEnableCard && Boolean(stripe)
+        if (!allowCard) return reply.code(400).send({ error: 'CARD disabled' })
+        if (!t.payment) {
+          const rider = await prisma.user.findUnique({ where: { id: t.riderId }, select: { stripeCustomerId: true, stripeDefaultPaymentMethodId: true } as any })
+          if (!(rider as any)?.stripeCustomerId) {
+            return reply.code(400).send({ error: 'Rider has no card on file' })
+          }
           const amountCents = Math.max(1, Math.round(Number(t.costUsd as any || 0) * 100)) || 100
-          const intent = await stripe.paymentIntents.create({
+          const intent = await (stripe as any).paymentIntents.create({
             amount: amountCents, currency: 'usd', capture_method: 'manual',
             customer: (rider as any).stripeCustomerId,
             payment_method: (rider as any).stripeDefaultPaymentMethodId || undefined,
@@ -182,8 +199,6 @@ export default async function tripRoutes(app: FastifyInstance) {
             metadata: { tripId: id }
           })
           await prisma.payment.create({ data: { tripId: id, amountUsd: Number((t.costUsd as any) || 0) as any, status: 'AUTHORIZED' as any, method: 'CARD', provider: 'Stripe', externalId: intent.id } })
-        } else {
-          await prisma.payment.create({ data: { tripId: id, amountUsd: Number((t.costUsd as any) || 0) as any, status: 'AUTHORIZED' as any, method: 'CARD', provider: null, externalId: null } })
         }
       } else if (!t.payment && payMethod === 'CASH') {
         await prisma.payment.create({ data: { tripId: id, amountUsd: Number((t.costUsd as any) || 0) as any, status: 'PENDING' as any, method: 'CASH', provider: null, externalId: null } })
@@ -239,12 +254,12 @@ export default async function tripRoutes(app: FastifyInstance) {
       const { reason } = (req.body || {}) as { reason?: string }
       if (!id) return reply.code(400).send({ error: 'Invalid id' })
       if (user.role !== 'RIDER' && user.role !== 'ADMIN') return reply.code(403).send({ error: 'Forbidden' })
-      const t = await prisma.trip.findUnique({ where: { id }, select: { id: true, riderId: true, status: true, acceptedAt: true, arrivedAt: true, pricingSnapshot: true } })
+      const t = await prisma.trip.findUnique({ where: { id }, select: { id: true, riderId: true, status: true, acceptedAt: true, arrivedAt: true, pricingSnapshot: true, city: true } })
       if (!t) return reply.code(404).send({ error: 'Trip not found' })
       if (user.role !== 'ADMIN' && t.riderId !== user.id) return reply.code(403).send({ error: 'Not your trip' })
       let fee = 0
       // Determine fee by status
-      const city = (t.pricingSnapshot as any)?.city || 'default'
+      const city = (t as any).city || (t.pricingSnapshot as any)?.city || 'default'
       const rule = await prisma.tariffRule.findFirst({ where: { city, active: true }, orderBy: { updatedAt: 'desc' } })
       const graceSec = Number((rule as any)?.cancellationGraceSec ?? process.env.CANCELLATION_FEE_GRACE_SEC ?? 120)
       if (t.status === 'ARRIVED') {

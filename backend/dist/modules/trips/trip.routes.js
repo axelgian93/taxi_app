@@ -10,8 +10,9 @@ const metrics_service_1 = require("../../services/metrics.service");
 const pricing_service_1 = require("../../services/pricing.service");
 const haversine_1 = require("../../utils/haversine");
 const stripe_service_1 = require("../../services/stripe.service");
-const trip_schemas_1 = require("./trip.schemas");
+const env_1 = require("../../config/env");
 const push_service_1 = require("../../services/push.service");
+const trip_schemas_1 = require("./trip.schemas");
 async function tripRoutes(app) {
     const MATCH_RADIUS_M = Number(process.env.MATCH_RADIUS_M || 5000);
     const LOCATION_MAX_AGE_MIN = Number(process.env.LOCATION_MAX_AGE_MIN || 10);
@@ -50,8 +51,10 @@ async function tripRoutes(app) {
           ORDER BY meters ASC
           LIMIT 1
         `;
-                if (nearest && nearest.length > 0)
+                if (nearest && nearest.length > 0) {
+                    (0, metrics_service_1.incCounter)('matching_postgis');
                     return nearest[0].userId;
+                }
             }
             catch {
                 // fallthrough to haversine
@@ -73,6 +76,11 @@ async function tripRoutes(app) {
                 best = c.userId;
             }
         }
+        if (best) {
+            (0, metrics_service_1.incCounter)('matching_haversine');
+            return best;
+        }
+        (0, metrics_service_1.incCounter)('matching_idle_fallback');
         return best;
     }
     // POST /trips/request â€” Rider creates a trip and assigns nearest driver
@@ -112,6 +120,7 @@ async function tripRoutes(app) {
                 dropoffAddress: b.dropoffAddress ?? null,
                 distanceKm: Number(b.distanceKm),
                 durationMin: Number(b.durationMin) || null,
+                city: String(b.city),
                 pricingSnapshot: { city: String(b.city), fare, preferredMethod: b.preferredMethod ?? null },
                 costUsd: Number(fare.totalUsd),
                 currency: 'USD',
@@ -183,11 +192,17 @@ async function tripRoutes(app) {
         const t = await prisma_1.default.trip.findUnique({ where: { id }, include: { payment: true, rider: true } });
         if (!t)
             return reply.code(404).send({ error: 'Trip not found' });
-        // Preauth if CARD and Stripe configured
-        if (payMethod === 'CARD' && !t.payment) {
+        // Preauth if CARD and Stripe configured; block CARD if disabled/absent
+        if (payMethod === 'CARD') {
             const stripe = (0, stripe_service_1.getStripe)();
-            const rider = await prisma_1.default.user.findUnique({ where: { id: t.riderId }, select: { stripeCustomerId: true, stripeDefaultPaymentMethodId: true } });
-            if (stripe && rider?.stripeCustomerId) {
+            const allowCard = env_1.env.paymentsEnableCard && Boolean(stripe);
+            if (!allowCard)
+                return reply.code(400).send({ error: 'CARD disabled' });
+            if (!t.payment) {
+                const rider = await prisma_1.default.user.findUnique({ where: { id: t.riderId }, select: { stripeCustomerId: true, stripeDefaultPaymentMethodId: true } });
+                if (!rider?.stripeCustomerId) {
+                    return reply.code(400).send({ error: 'Rider has no card on file' });
+                }
                 const amountCents = Math.max(1, Math.round(Number(t.costUsd || 0) * 100)) || 100;
                 const intent = await stripe.paymentIntents.create({
                     amount: amountCents, currency: 'usd', capture_method: 'manual',
@@ -197,9 +212,6 @@ async function tripRoutes(app) {
                     metadata: { tripId: id }
                 });
                 await prisma_1.default.payment.create({ data: { tripId: id, amountUsd: Number(t.costUsd || 0), status: 'AUTHORIZED', method: 'CARD', provider: 'Stripe', externalId: intent.id } });
-            }
-            else {
-                await prisma_1.default.payment.create({ data: { tripId: id, amountUsd: Number(t.costUsd || 0), status: 'AUTHORIZED', method: 'CARD', provider: null, externalId: null } });
             }
         }
         else if (!t.payment && payMethod === 'CASH') {
@@ -259,14 +271,14 @@ async function tripRoutes(app) {
             return reply.code(400).send({ error: 'Invalid id' });
         if (user.role !== 'RIDER' && user.role !== 'ADMIN')
             return reply.code(403).send({ error: 'Forbidden' });
-        const t = await prisma_1.default.trip.findUnique({ where: { id }, select: { id: true, riderId: true, status: true, acceptedAt: true, arrivedAt: true, pricingSnapshot: true } });
+        const t = await prisma_1.default.trip.findUnique({ where: { id }, select: { id: true, riderId: true, status: true, acceptedAt: true, arrivedAt: true, pricingSnapshot: true, city: true } });
         if (!t)
             return reply.code(404).send({ error: 'Trip not found' });
         if (user.role !== 'ADMIN' && t.riderId !== user.id)
             return reply.code(403).send({ error: 'Not your trip' });
         let fee = 0;
         // Determine fee by status
-        const city = t.pricingSnapshot?.city || 'default';
+        const city = t.city || t.pricingSnapshot?.city || 'default';
         const rule = await prisma_1.default.tariffRule.findFirst({ where: { city, active: true }, orderBy: { updatedAt: 'desc' } });
         const graceSec = Number(rule?.cancellationGraceSec ?? process.env.CANCELLATION_FEE_GRACE_SEC ?? 120);
         if (t.status === 'ARRIVED') {

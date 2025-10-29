@@ -1,5 +1,6 @@
 // src/modules/payments/stripe.webhook.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import prisma from '../../lib/prisma'
 import { getStripe, getStripeWebhookSecret } from '../../services/stripe.service'
 

@@ -9,7 +9,7 @@ export function getStripe(): StripeType | null {
   const key = env.stripeSecretKey
   if (!key) return (stripe = null)
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+     
     const Stripe = require('stripe')
     stripe = new Stripe(key, { apiVersion: '2024-06-20' })
   } catch {

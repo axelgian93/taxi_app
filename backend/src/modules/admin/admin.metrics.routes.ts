@@ -1,5 +1,6 @@
 ﻿// src/modules/admin/admin.metrics.routes.ts
 import type { FastifyInstance } from 'fastify'
+
 import { getMetricsText } from '../../services/metrics.prom'
 import { env } from '../../config/env'
 

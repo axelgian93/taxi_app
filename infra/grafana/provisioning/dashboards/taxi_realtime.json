@@ -1,0 +1,49 @@
+{
+  "uid": "taxi-realtime",
+  "title": "Taxi - Realtime",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "panels": [
+    {
+      "type": "gauge",
+      "title": "SSE Current Connections",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "app_sse_connections_current" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "SSE Connections (lifetime)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "app_sse_connections_total" }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "Drivers Available (current)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "app_drivers_available_current" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Matching Path Counters",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+      "targets": [
+        { "expr": "app_matching_postgis_total" },
+        { "expr": "app_matching_haversine_total" },
+        { "expr": "app_matching_idle_fallback_total" }
+      ]
+    }
+  ]
+}
+

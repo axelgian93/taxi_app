@@ -1,5 +1,6 @@
 // src/utils/authGuard.ts
 import { FastifyReply, FastifyRequest } from 'fastify'
+
 import { verifyJwt } from '../lib/jwt'
 
 export function authGuard(roles?: Array<'ADMIN' | 'DRIVER' | 'RIDER'>) {
