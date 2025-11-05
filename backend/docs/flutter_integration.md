@@ -4,12 +4,12 @@ Dependency (pubspec.yaml)
 
 dependencies:
   dio: ^5.7.0
-  openapi:
+  taxi_openapi:
     path: ../backend/docs/dart-sdk
 
 Initialize client
 
-import 'package:openapi/openapi.dart';
+import 'package:taxi_openapi/taxi_openapi.dart';
 
 class ApiClient {
   static final ApiClient _i = ApiClient._();
@@ -50,7 +50,7 @@ Login and request a trip (example)
 final api = ApiClient();
 api.configure(baseUrl: 'http://localhost:8080');
 
-final login = await api.auth.authLoginPost(
+final login = await api.auth.authLogin(
   authLoginRequest: AuthLoginRequest((b) => b
     ..email = 'rider@taxi.local'
     ..password = '123456'),
@@ -68,12 +68,12 @@ final req = TripsRequestRequest((b) => b
   ..distanceKm = 5.4
   ..durationMin = 14);
 
-final created = await api.trips.tripsRequestPost(tripsRequestRequest: req);
+final created = await api.trips.tripsRequest(tripsRequestRequest: req);
 final tripId = created.data?.trip?.id;
 
 Register push token (FCM)
 
-await api.users.usersRegisterPushTokenPost(
+await api.users.usersRegisterPushToken(
   usersRegisterPushTokenRequest: UsersRegisterPushTokenRequest((b) => b
     ..fcmToken = 'd5x...:APA91bHExampleToken'),
 );

@@ -1,8 +1,8 @@
-# openapi.model.DriverUpdateStatusRequest
+# taxi_openapi.model.DriverUpdateStatusRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

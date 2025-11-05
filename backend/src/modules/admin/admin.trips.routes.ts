@@ -1,12 +1,20 @@
 ﻿import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
 import prisma from '../../lib/prisma'
+import { incCounter } from '../../services/metrics.service'
 
 const listQuery = {
   type: 'object',
   properties: {
     limit: { type: 'integer', minimum: 1, maximum: 200, default: 50 },
-    cursor: { type: 'string' }
+    cursor: { type: 'string' },
+    from: { type: 'string', format: 'date-time' },
+    to: { type: 'string', format: 'date-time' },
+    city: { type: 'string' },
+    status: { type: 'string' },
+    riderEmail: { type: 'string' },
+    driverEmail: { type: 'string' },
+    format: { type: 'string', enum: ['json','csv'], default: 'json' }
   }
 } as const
 
@@ -37,17 +45,44 @@ export default async function adminTripsRoutes(app: FastifyInstance) {
       }
     },
     async (req: FastifyRequest, reply: FastifyReply) => {
-      const { limit = 50, cursor } = req.query as { limit?: number; cursor?: string }
-      const items = await prisma.trip.findMany({
+      incCounter('admin_trips_queries_total' as any)
+      const q = (req.query || {}) as any
+      const limit = Math.min(Math.max(Number(q.limit || 50), 1), 200)
+      const cursor = (q.cursor || '') as string
+      const from = q.from ? new Date(String(q.from)) : null
+      const to = q.to ? new Date(String(q.to)) : null
+      const city = q.city ? String(q.city) : undefined
+      const status = q.status ? String(q.status) : undefined
+      const riderEmail = q.riderEmail ? String(q.riderEmail) : undefined
+      const driverEmail = q.driverEmail ? String(q.driverEmail) : undefined
+      let riderId: string | undefined
+      let driverId: string | undefined
+      if (riderEmail) { const u = await prisma.user.findUnique({ where: { email: riderEmail }, select: { id: true } }); riderId = u?.id }
+      if (driverEmail) { const u = await prisma.user.findUnique({ where: { email: driverEmail }, select: { id: true } }); driverId = u?.id }
+
+      const where: any = {}
+      if (from || to) where.requestedAt = { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) }
+      if (city) where.city = city
+      if (status) where.status = status as any
+      if (riderId) where.riderId = riderId
+      if (driverId) where.driverId = driverId
+
+      const items = await (prisma as any).trip.findMany({
+        where,
         take: limit,
         ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
-        orderBy: { requestedAt: 'desc' },
-        select: {
-          id: true, status: true, riderId: true, driverId: true,
-          requestedAt: true, completedAt: true, costUsd: true, currency: true
-        }
+        orderBy: [{ requestedAt: 'desc' }, { id: 'desc' }],
+        select: { id: true, status: true, riderId: true, driverId: true, requestedAt: true, completedAt: true, costUsd: true, currency: true, city: true }
       })
       const nextCursor = items.length === limit ? items[items.length - 1].id : null
+      if ((q.format || 'json') === 'csv') {
+        incCounter('admin_trips_csv_exports_total' as any)
+        const header = 'id,status,riderId,driverId,requestedAt,completedAt,costUsd,currency,city\n'
+        const body = items.map((r: any) => [r.id, r.status, r.riderId || '', r.driverId || '', new Date(r.requestedAt).toISOString(), r.completedAt ? new Date(r.completedAt).toISOString() : '', r.costUsd ?? '', r.currency ?? '', r.city ?? '']
+          .map((v: any) => { const s = String(v); return /[,"]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s }).join(',') ).join('\n')
+        reply.header('Content-Type', 'text/csv; charset=utf-8')
+        return reply.send(header + body + '\n')
+      }
       return reply.send({ items, nextCursor })
     }
   )

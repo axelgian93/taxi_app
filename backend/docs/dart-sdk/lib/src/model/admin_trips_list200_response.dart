@@ -4,7 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:built_collection/built_collection.dart';
-import 'package:openapi/src/model/admin_trips_list200_response_items_inner.dart';
+import 'package:taxi_openapi/src/model/admin_trips_list200_response_items_inner.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -57,7 +57,7 @@ class _$AdminTripsList200ResponseSerializer implements PrimitiveSerializer<Admin
       yield r'nextCursor';
       yield serializers.serialize(
         object.nextCursor,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
   }
@@ -93,8 +93,9 @@ class _$AdminTripsList200ResponseSerializer implements PrimitiveSerializer<Admin
         case r'nextCursor':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.nextCursor = valueDes;
           break;
         default:

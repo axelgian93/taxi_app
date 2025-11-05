@@ -2,28 +2,31 @@
 
 Prerequisites
 - Flutter SDK 3.3+
-- Backend running locally on http://localhost:8080 (Docker compose or npm run dev)
+- Backend running locally (http://127.0.0.1:8080)
 
 Setup
 1) Install deps
    cd mobile-rider
    flutter pub get
 
-2) Run (Android emulator)
-   flutter run
-   In Login, base URL = http://10.0.2.2:8080
+2) Run
+   - Android emulator: flutter run (Base URL defaults to http://10.0.2.2:8080)
+   - iOS simulator: flutter run (Base URL defaults to http://127.0.0.1:8080)
 
 3) Users (after backend bootstrap)
    rider@taxi.local / 123456
 
 What it does
 - Login (obtains JWT and sets it globally)
-- Request trip with sample coordinates
-- Opens SSE to receive live trip events (status updates)
-- Cancel button to invoke /trips/:id/cancel
+- Rider: request trip (sample coords), listen SSE for status, cancel
+- Driver: accept/arrived/start/complete, refresh my trips, check payment
+- Driver: share location manually or via GPS (permissions required)
 
 Notes
-- For iOS Simulator use base URL http://127.0.0.1:8080
-- The app depends on the generated Dart SDK at ../backend/docs/dart-sdk
+- The app depends on the generated Dart SDK at ../backend/docs/dart-sdk (package name taxi_openapi)
+- Base URL defaults by platform and persists (SharedPreferences). You can override it in the Login screen.
+- For GPS location (Driver): grant location permissions on device/emulator.
+  - Android: enable location in emulator; if needed, add mock location.
+  - iOS: emulator requires Location set in Features > Location; for real device, ensure permissions.
 
 

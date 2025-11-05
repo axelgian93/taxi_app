@@ -4,7 +4,7 @@
 
 // ignore_for_file: unused_element
 import 'package:built_collection/built_collection.dart';
-import 'package:openapi/src/model/admin_diagnostics_matching200_response_env.dart';
+import 'package:taxi_openapi/src/model/admin_diagnostics_matching200_response_env.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 

@@ -100,21 +100,21 @@ class _$PaymentsRefundsByTrip200ResponseItemsInnerSerializer implements Primitiv
       yield r'reason';
       yield serializers.serialize(
         object.reason,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.provider != null) {
       yield r'provider';
       yield serializers.serialize(
         object.provider,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.externalId != null) {
       yield r'externalId';
       yield serializers.serialize(
         object.externalId,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.createdAt != null) {
@@ -178,22 +178,25 @@ class _$PaymentsRefundsByTrip200ResponseItemsInnerSerializer implements Primitiv
         case r'reason':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.reason = valueDes;
           break;
         case r'provider':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.provider = valueDes;
           break;
         case r'externalId':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.externalId = valueDes;
           break;
         case r'createdAt':

@@ -3,7 +3,7 @@
 //
 
 // ignore_for_file: unused_element
-import 'package:openapi/src/model/trips_request200_response_trip.dart';
+import 'package:taxi_openapi/src/model/trips_request200_response_trip.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 

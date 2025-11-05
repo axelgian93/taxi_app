@@ -3,7 +3,7 @@
 //
 
 // ignore_for_file: unused_element
-import 'package:openapi/src/model/auth_me200_response_user.dart';
+import 'package:taxi_openapi/src/model/auth_me200_response_user.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 

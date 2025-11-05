@@ -1,8 +1,8 @@
-# openapi.api.AuthApi
+# taxi_openapi.api.AuthApi
 
 ## Load the API package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 All URIs are relative to *http://localhost:8080*
@@ -10,7 +10,9 @@ All URIs are relative to *http://localhost:8080*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**authLogin**](AuthApi.md#authlogin) | **POST** /auth/login | 
+[**authLogout**](AuthApi.md#authlogout) | **POST** /auth/logout | 
 [**authMe**](AuthApi.md#authme) | **GET** /auth/me | 
+[**authRefresh**](AuthApi.md#authrefresh) | **POST** /auth/refresh | 
 [**authRegister**](AuthApi.md#authregister) | **POST** /auth/register | 
 
 
@@ -21,9 +23,9 @@ Method | HTTP request | Description
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAuthApi();
+final api = TaxiOpenapi().getAuthApi();
 final AuthLoginRequest authLoginRequest = ; // AuthLoginRequest | 
 
 try {
@@ -55,6 +57,47 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **authLogout**
+> AuthLogout200Response authLogout(authLogoutRequest)
+
+
+
+### Example
+```dart
+import 'package:taxi_openapi/api.dart';
+
+final api = TaxiOpenapi().getAuthApi();
+final AuthLogoutRequest authLogoutRequest = ; // AuthLogoutRequest | 
+
+try {
+    final response = api.authLogout(authLogoutRequest);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling AuthApi->authLogout: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **authLogoutRequest** | [**AuthLogoutRequest**](AuthLogoutRequest.md)|  | [optional] 
+
+### Return type
+
+[**AuthLogout200Response**](AuthLogout200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **authMe**
 > AuthMe200Response authMe()
 
@@ -62,9 +105,9 @@ No authorization required
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAuthApi();
+final api = TaxiOpenapi().getAuthApi();
 
 try {
     final response = api.authMe();
@@ -92,6 +135,47 @@ This endpoint does not need any parameter.
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **authRefresh**
+> AuthRefresh200Response authRefresh(authRefreshRequest)
+
+
+
+### Example
+```dart
+import 'package:taxi_openapi/api.dart';
+
+final api = TaxiOpenapi().getAuthApi();
+final AuthRefreshRequest authRefreshRequest = ; // AuthRefreshRequest | 
+
+try {
+    final response = api.authRefresh(authRefreshRequest);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling AuthApi->authRefresh: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **authRefreshRequest** | [**AuthRefreshRequest**](AuthRefreshRequest.md)|  | 
+
+### Return type
+
+[**AuthRefresh200Response**](AuthRefresh200Response.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **authRegister**
 > AuthRegister201Response authRegister(authRegisterRequest)
 
@@ -99,9 +183,9 @@ This endpoint does not need any parameter.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAuthApi();
+final api = TaxiOpenapi().getAuthApi();
 final AuthRegisterRequest authRegisterRequest = ; // AuthRegisterRequest | 
 
 try {

@@ -1,8 +1,8 @@
-# openapi.api.UsersApi
+# taxi_openapi.api.UsersApi
 
 ## Load the API package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 All URIs are relative to *http://localhost:8080*
@@ -22,9 +22,9 @@ Borra el FCM token asociado al usuario (logout de push notifications).
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getUsersApi();
+final api = TaxiOpenapi().getUsersApi();
 
 try {
     final response = api.usersDeletePushToken();
@@ -61,9 +61,9 @@ Registra o actualiza el FCM token del usuario logueado.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getUsersApi();
+final api = TaxiOpenapi().getUsersApi();
 final UsersRegisterPushTokenRequest usersRegisterPushTokenRequest = ; // UsersRegisterPushTokenRequest | 
 
 try {

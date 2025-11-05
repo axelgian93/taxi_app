@@ -32,9 +32,74 @@ export interface AdminDiagnosticsMatching200ResponseEnv {
     'MATCH_RADIUS_M'?: number;
     'LOCATION_MAX_AGE_MIN'?: number;
 }
+export interface AdminDiagnosticsMatchingTest200Response {
+    'postgisAvailable'?: boolean;
+    'modeUsed'?: AdminDiagnosticsMatchingTest200ResponseModeUsedEnum;
+    'driverId'?: string | null;
+    'meters'?: number | null;
+    'candidatesChecked'?: number | null;
+}
+
+export const AdminDiagnosticsMatchingTest200ResponseModeUsedEnum = {
+    Postgis: 'POSTGIS',
+    Haversine: 'HAVERSINE',
+    Idle: 'IDLE'
+} as const;
+
+export type AdminDiagnosticsMatchingTest200ResponseModeUsedEnum = typeof AdminDiagnosticsMatchingTest200ResponseModeUsedEnum[keyof typeof AdminDiagnosticsMatchingTest200ResponseModeUsedEnum];
+
+export interface AdminDiagnosticsMatchingTestRequest {
+    'pickupLat': number;
+    'pickupLng': number;
+    'radiusM'?: number;
+    'maxAgeMin'?: number;
+}
+export interface AdminPaymentsReport200Response {
+    'items'?: Array<{ [key: string]: any; }>;
+    'totals'?: AdminPaymentsReport200ResponseTotals;
+}
+export interface AdminPaymentsReport200ResponseTotals {
+    'count'?: number;
+    'amountUsd'?: number;
+}
+export interface AdminPaymentsSummaryStatus200Response {
+    'items'?: Array<AdminPaymentsSummaryStatus200ResponseItemsInner>;
+    'totals'?: AdminPaymentsReport200ResponseTotals;
+}
+export interface AdminPaymentsSummaryStatus200ResponseItemsInner {
+    'status'?: string;
+    'count'?: number;
+    'amountUsd'?: number;
+}
+export interface AdminPaymentsTopDrivers200Response {
+    'items'?: Array<AdminPaymentsTopDrivers200ResponseItemsInner>;
+    'totals'?: AdminPaymentsTopDrivers200ResponseTotals;
+}
+export interface AdminPaymentsTopDrivers200ResponseItemsInner {
+    'driverId'?: string;
+    'email'?: string;
+    'fullName'?: string;
+    'trips'?: number;
+    'amountUsd'?: number;
+}
+export interface AdminPaymentsTopDrivers200ResponseTotals {
+    'trips'?: number;
+    'amountUsd'?: number;
+}
+export interface AdminPaymentsTopRiders200Response {
+    'items'?: Array<AdminPaymentsTopRiders200ResponseItemsInner>;
+    'totals'?: AdminPaymentsTopDrivers200ResponseTotals;
+}
+export interface AdminPaymentsTopRiders200ResponseItemsInner {
+    'riderId'?: string;
+    'email'?: string;
+    'fullName'?: string;
+    'trips'?: number;
+    'amountUsd'?: number;
+}
 export interface AdminRefundsList200Response {
     'items'?: Array<PaymentsRefundsByTrip200ResponseItemsInner>;
-    'nextCursor'?: string;
+    'nextCursor'?: string | null;
 }
 export interface AdminTariffsCreateRequest {
     'city': string;
@@ -46,12 +111,12 @@ export interface AdminTariffsCreateRequest {
     'nightMultiplier'?: number;
     'weekendMultiplier'?: number;
     'surgeMultiplier'?: number;
-    'nightStartHour'?: number;
-    'nightEndHour'?: number;
-    'cancellationGraceSec'?: number;
+    'nightStartHour'?: number | null;
+    'nightEndHour'?: number | null;
+    'cancellationGraceSec'?: number | null;
     'cancellationFeeAcceptedUsd'?: number;
     'cancellationFeeArrivedUsd'?: number;
-    'notes'?: string;
+    'notes'?: string | null;
     /**
      * Si true, desactiva reglas activas previas de la misma ciudad
      */
@@ -71,14 +136,14 @@ export interface AdminTariffsList200ResponseItemsInner {
     'nightMultiplier'?: number;
     'weekendMultiplier'?: number;
     'surgeMultiplier'?: number;
-    'nightStartHour'?: number;
-    'nightEndHour'?: number;
-    'cancellationGraceSec'?: number;
+    'nightStartHour'?: number | null;
+    'nightEndHour'?: number | null;
+    'cancellationGraceSec'?: number | null;
     'cancellationFeeAcceptedUsd'?: number;
     'cancellationFeeArrivedUsd'?: number;
-    'validFrom'?: string;
-    'validTo'?: string;
-    'notes'?: string;
+    'validFrom'?: string | null;
+    'validTo'?: string | null;
+    'notes'?: string | null;
     'createdAt'?: string;
     'updatedAt'?: string;
 }
@@ -92,12 +157,12 @@ export interface AdminTariffsUpdateByIdRequest {
     'nightMultiplier'?: number;
     'weekendMultiplier'?: number;
     'surgeMultiplier'?: number;
-    'nightStartHour'?: number;
-    'nightEndHour'?: number;
-    'cancellationGraceSec'?: number;
+    'nightStartHour'?: number | null;
+    'nightEndHour'?: number | null;
+    'cancellationGraceSec'?: number | null;
     'cancellationFeeAcceptedUsd'?: number;
     'cancellationFeeArrivedUsd'?: number;
-    'notes'?: string;
+    'notes'?: string | null;
     /**
      * Si true, desactiva reglas activas previas de la misma ciudad
      */
@@ -105,7 +170,7 @@ export interface AdminTariffsUpdateByIdRequest {
 }
 export interface AdminTripsList200Response {
     'items'?: Array<AdminTripsList200ResponseItemsInner>;
-    'nextCursor'?: string;
+    'nextCursor'?: string | null;
 }
 export interface AdminTripsList200ResponseItemsInner {
     'id'?: string;
@@ -113,13 +178,19 @@ export interface AdminTripsList200ResponseItemsInner {
     'riderId'?: string;
     'driverId'?: string;
     'requestedAt'?: string;
-    'completedAt'?: string;
+    'completedAt'?: string | null;
     'costUsd'?: number;
     'currency'?: string;
 }
 export interface AuthLoginRequest {
     'email': string;
     'password': string;
+}
+export interface AuthLogout200Response {
+    'ok'?: boolean;
+}
+export interface AuthLogoutRequest {
+    'refreshToken'?: string;
 }
 export interface AuthMe200Response {
     'user'?: AuthMe200ResponseUser;
@@ -140,8 +211,16 @@ export const AuthMe200ResponseUserRoleEnum = {
 
 export type AuthMe200ResponseUserRoleEnum = typeof AuthMe200ResponseUserRoleEnum[keyof typeof AuthMe200ResponseUserRoleEnum];
 
+export interface AuthRefresh200Response {
+    'token'?: string;
+    'refreshToken'?: string;
+}
+export interface AuthRefreshRequest {
+    'refreshToken': string;
+}
 export interface AuthRegister201Response {
     'token'?: string;
+    'refreshToken'?: string;
     'user'?: AuthRegister201ResponseUser;
 }
 export interface AuthRegister201ResponseUser {
@@ -177,8 +256,66 @@ export const AuthRegisterRequestRoleEnum = {
 
 export type AuthRegisterRequestRoleEnum = typeof AuthRegisterRequestRoleEnum[keyof typeof AuthRegisterRequestRoleEnum];
 
+export interface DriverMyTripsActive200Response {
+    'items'?: Array<DriverMyTripsActive200ResponseItemsInner>;
+}
+export interface DriverMyTripsActive200ResponseItemsInner {
+    'id'?: string;
+    'status'?: DriverMyTripsActive200ResponseItemsInnerStatusEnum;
+    'pickupLat'?: number;
+    'pickupLng'?: number;
+    'dropoffLat'?: number;
+    'dropoffLng'?: number;
+    'requestedAt'?: string;
+    'preferredMethod'?: DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum | null;
+}
+
+export const DriverMyTripsActive200ResponseItemsInnerStatusEnum = {
+    Accepted: 'ACCEPTED',
+    Arrived: 'ARRIVED',
+    Started: 'STARTED'
+} as const;
+
+export type DriverMyTripsActive200ResponseItemsInnerStatusEnum = typeof DriverMyTripsActive200ResponseItemsInnerStatusEnum[keyof typeof DriverMyTripsActive200ResponseItemsInnerStatusEnum];
+export const DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum = {
+    Cash: 'CASH',
+    Card: 'CARD'
+} as const;
+
+export type DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum = typeof DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum[keyof typeof DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum];
+
+export interface DriverMyTripsActive403Response {
+    'error'?: string;
+}
+export interface DriverMyTripsHistory200Response {
+    'items'?: Array<DriverMyTripsHistory200ResponseItemsInner>;
+    'nextCursor'?: string | null;
+}
+export interface DriverMyTripsHistory200ResponseItemsInner {
+    'id'?: string;
+    'status'?: DriverMyTripsHistory200ResponseItemsInnerStatusEnum;
+    'pickupLat'?: number;
+    'pickupLng'?: number;
+    'dropoffLat'?: number;
+    'dropoffLng'?: number;
+    'requestedAt'?: string;
+    'completedAt'?: string | null;
+    'costUsd'?: number | null;
+    'currency'?: string | null;
+}
+
+export const DriverMyTripsHistory200ResponseItemsInnerStatusEnum = {
+    Completed: 'COMPLETED',
+    Canceled: 'CANCELED'
+} as const;
+
+export type DriverMyTripsHistory200ResponseItemsInnerStatusEnum = typeof DriverMyTripsHistory200ResponseItemsInnerStatusEnum[keyof typeof DriverMyTripsHistory200ResponseItemsInnerStatusEnum];
+
 export interface DriverUpdateStatus200Response {
     'ok'?: boolean;
+}
+export interface DriverUpdateStatus401Response {
+    'error'?: string;
 }
 export interface DriverUpdateStatusRequest {
     'lat'?: number;
@@ -196,12 +333,18 @@ export const DriverUpdateStatusRequestStatusEnum = {
 
 export type DriverUpdateStatusRequestStatusEnum = typeof DriverUpdateStatusRequestStatusEnum[keyof typeof DriverUpdateStatusRequestStatusEnum];
 
+export interface PaymentsCaptureByTrip400Response {
+    'error'?: string;
+}
+export interface PaymentsCaptureByTrip404Response {
+    'error'?: string;
+}
 export interface PaymentsCreateSetupIntent200Response {
     'clientSecret'?: string;
 }
 export interface PaymentsList200Response {
     'items'?: Array<PaymentsList200ResponseItemsInner>;
-    'nextCursor'?: string;
+    'nextCursor'?: string | null;
 }
 export interface PaymentsList200ResponseItemsInner {
     'id'?: string;
@@ -209,8 +352,8 @@ export interface PaymentsList200ResponseItemsInner {
     'amountUsd'?: number;
     'status'?: PaymentsList200ResponseItemsInnerStatusEnum;
     'method'?: string;
-    'provider'?: string;
-    'externalId'?: string;
+    'provider'?: string | null;
+    'externalId'?: string | null;
     'createdAt'?: string;
     'updatedAt'?: string;
     'isAuthorized'?: boolean;
@@ -236,9 +379,9 @@ export interface PaymentsReceiptByTrip200Response {
     'currency'?: string;
     'method'?: string;
     'status'?: string;
-    'provider'?: string;
+    'provider'?: string | null;
     'type'?: PaymentsReceiptByTrip200ResponseTypeEnum;
-    'paidAt'?: string;
+    'paidAt'?: string | null;
 }
 
 export const PaymentsReceiptByTrip200ResponseTypeEnum = {
@@ -260,16 +403,92 @@ export interface PaymentsRefundsByTrip200ResponseItemsInner {
     'paymentId'?: string;
     'tripId'?: string;
     'amountUsd'?: number;
-    'reason'?: string;
-    'provider'?: string;
-    'externalId'?: string;
+    'reason'?: string | null;
+    'provider'?: string | null;
+    'externalId'?: string | null;
     'createdAt'?: string;
+}
+export interface PaymentsRefundsByTrip404Response {
+    'error'?: string;
 }
 export interface PaymentsSetDefaultMethodRequest {
     'paymentMethodId': string;
 }
+export interface RiderMyTrips200Response {
+    'items'?: Array<RiderMyTrips200ResponseItemsInner>;
+    'nextCursor'?: string | null;
+}
+export interface RiderMyTrips200ResponseItemsInner {
+    'id'?: string;
+    'status'?: RiderMyTrips200ResponseItemsInnerStatusEnum;
+    'pickupLat'?: number;
+    'pickupLng'?: number;
+    'dropoffLat'?: number;
+    'dropoffLng'?: number;
+    'requestedAt'?: string;
+    'completedAt'?: string | null;
+    'costUsd'?: number | null;
+    'currency'?: string | null;
+    'preferredMethod'?: RiderMyTrips200ResponseItemsInnerPreferredMethodEnum | null;
+}
+
+export const RiderMyTrips200ResponseItemsInnerStatusEnum = {
+    Requested: 'REQUESTED',
+    Assigned: 'ASSIGNED',
+    Accepted: 'ACCEPTED',
+    Arrived: 'ARRIVED',
+    Started: 'STARTED',
+    Completed: 'COMPLETED',
+    Canceled: 'CANCELED'
+} as const;
+
+export type RiderMyTrips200ResponseItemsInnerStatusEnum = typeof RiderMyTrips200ResponseItemsInnerStatusEnum[keyof typeof RiderMyTrips200ResponseItemsInnerStatusEnum];
+export const RiderMyTrips200ResponseItemsInnerPreferredMethodEnum = {
+    Cash: 'CASH',
+    Card: 'CARD'
+} as const;
+
+export type RiderMyTrips200ResponseItemsInnerPreferredMethodEnum = typeof RiderMyTrips200ResponseItemsInnerPreferredMethodEnum[keyof typeof RiderMyTrips200ResponseItemsInnerPreferredMethodEnum];
+
+export interface TripsAccept400Response {
+    'error'?: string;
+}
+export interface TripsAccept404Response {
+    'error'?: string;
+}
+export interface TripsAccept409Response {
+    'error'?: string;
+}
+export interface TripsArrived200Response {
+    'ok'?: boolean;
+    'trip'?: TripsRequest200ResponseTrip;
+}
+export interface TripsArrived409Response {
+    'error'?: string;
+}
+export interface TripsCancel200Response {
+    'ok'?: boolean;
+    'trip'?: TripsRequest200ResponseTrip;
+}
+export interface TripsCancel409Response {
+    'error'?: string;
+}
 export interface TripsCancelRequest {
     'reason'?: string;
+}
+export interface TripsComplete200Response {
+    'ok'?: boolean;
+    'trip'?: TripsRequest200ResponseTrip;
+}
+export interface TripsComplete409Response {
+    'error'?: string;
+}
+export interface TripsDriverLocation200Response {
+    'tripId'?: string;
+    'driverId'?: string | null;
+    'lat'?: number | null;
+    'lng'?: number | null;
+    'locationUpdatedAt'?: string | null;
 }
 export interface TripsRequest200Response {
     'ok'?: boolean;
@@ -277,34 +496,49 @@ export interface TripsRequest200Response {
 }
 export interface TripsRequest200ResponseTrip {
     'id'?: string;
-    'status'?: TripsRequest200ResponseTripStatusEnum;
+    'status'?: string;
 }
-
-export const TripsRequest200ResponseTripStatusEnum = {
-    Assigned: 'ASSIGNED',
-    Accepted: 'ACCEPTED',
-    Arrived: 'ARRIVED',
-    Ongoing: 'ONGOING',
-    Completed: 'COMPLETED',
-    Canceled: 'CANCELED'
-} as const;
-
-export type TripsRequest200ResponseTripStatusEnum = typeof TripsRequest200ResponseTripStatusEnum[keyof typeof TripsRequest200ResponseTripStatusEnum];
-
+export interface TripsRequest400Response {
+    'error'?: string;
+}
 export interface TripsRequestRequest {
     'city': string;
     'pickupLat': number;
     'pickupLng': number;
     'dropoffLat': number;
     'dropoffLng': number;
-    'pickupAddress'?: string;
-    'dropoffAddress'?: string;
+    'pickupAddress'?: string | null;
+    'dropoffAddress'?: string | null;
     'distanceKm': number;
     'durationMin': number;
+    'preferredMethod'?: TripsRequestRequestPreferredMethodEnum | null;
 }
-export interface UsersRegisterPushToken200Response {
+
+export const TripsRequestRequestPreferredMethodEnum = {
+    Cash: 'CASH',
+    Card: 'CARD'
+} as const;
+
+export type TripsRequestRequestPreferredMethodEnum = typeof TripsRequestRequestPreferredMethodEnum[keyof typeof TripsRequestRequestPreferredMethodEnum];
+
+export interface TripsStart200Response {
     'ok'?: boolean;
+    'trip'?: TripsRequest200ResponseTrip;
 }
+export interface TripsStart409Response {
+    'error'?: string;
+}
+export interface TripsStartRequest {
+    'method'?: TripsStartRequestMethodEnum;
+}
+
+export const TripsStartRequestMethodEnum = {
+    Cash: 'CASH',
+    Card: 'CARD'
+} as const;
+
+export type TripsStartRequestMethodEnum = typeof TripsStartRequestMethodEnum[keyof typeof TripsStartRequestMethodEnum];
+
 export interface UsersRegisterPushTokenRequest {
     'fcmToken': string;
 }
@@ -349,7 +583,47 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+         * Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+         * @summary Probar matching (PostGIS/Haversine/Idle)
+         * @param {AdminDiagnosticsMatchingTestRequest} adminDiagnosticsMatchingTestRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminDiagnosticsMatchingTest: async (adminDiagnosticsMatchingTestRequest: AdminDiagnosticsMatchingTestRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'adminDiagnosticsMatchingTestRequest' is not null or undefined
+            assertParamExists('adminDiagnosticsMatchingTest', 'adminDiagnosticsMatchingTestRequest', adminDiagnosticsMatchingTestRequest)
+            const localVarPath = `/admin/diagnostics/matching/test`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(adminDiagnosticsMatchingTestRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
          * @summary Prometheus metrics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -552,7 +826,7 @@ export const AdminApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
          * @summary Prometheus metrics (public)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -603,7 +877,20 @@ export const AdminApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+         * Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+         * @summary Probar matching (PostGIS/Haversine/Idle)
+         * @param {AdminDiagnosticsMatchingTestRequest} adminDiagnosticsMatchingTestRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest: AdminDiagnosticsMatchingTestRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminDiagnosticsMatchingTest200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AdminApi.adminDiagnosticsMatchingTest']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
          * @summary Prometheus metrics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -669,7 +956,7 @@ export const AdminApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
          * @summary Prometheus metrics (public)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -699,7 +986,17 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.adminDiagnosticsMatching(options).then((request) => request(axios, basePath));
         },
         /**
-         * Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+         * Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+         * @summary Probar matching (PostGIS/Haversine/Idle)
+         * @param {AdminDiagnosticsMatchingTestRequest} adminDiagnosticsMatchingTestRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest: AdminDiagnosticsMatchingTestRequest, options?: RawAxiosRequestConfig): AxiosPromise<AdminDiagnosticsMatchingTest200Response> {
+            return localVarFp.adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
          * @summary Prometheus metrics
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -750,7 +1047,7 @@ export const AdminApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.adminTripsList(limit, cursor, options).then((request) => request(axios, basePath));
         },
         /**
-         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+         * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
          * @summary Prometheus metrics (public)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -776,7 +1073,18 @@ export class AdminApi extends BaseAPI {
     }
 
     /**
-     * Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+     * Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+     * @summary Probar matching (PostGIS/Haversine/Idle)
+     * @param {AdminDiagnosticsMatchingTestRequest} adminDiagnosticsMatchingTestRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest: AdminDiagnosticsMatchingTestRequest, options?: RawAxiosRequestConfig) {
+        return AdminApiFp(this.configuration).adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
      * @summary Prometheus metrics
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -832,7 +1140,7 @@ export class AdminApi extends BaseAPI {
     }
 
     /**
-     * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+     * Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
      * @summary Prometheus metrics (public)
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -886,6 +1194,43 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
         },
         /**
          * 
+         * @param {AuthLogoutRequest} [authLogoutRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogout: async (authLogoutRequest?: AuthLogoutRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/auth/logout`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(authLogoutRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -911,6 +1256,41 @@ export const AuthApiAxiosParamCreator = function (configuration?: Configuration)
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @param {AuthRefreshRequest} authRefreshRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authRefresh: async (authRefreshRequest: AuthRefreshRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'authRefreshRequest' is not null or undefined
+            assertParamExists('authRefresh', 'authRefreshRequest', authRefreshRequest)
+            const localVarPath = `/auth/refresh`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(authRefreshRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -975,6 +1355,18 @@ export const AuthApiFp = function(configuration?: Configuration) {
         },
         /**
          * 
+         * @param {AuthLogoutRequest} [authLogoutRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authLogout(authLogoutRequest?: AuthLogoutRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLogout200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authLogout(authLogoutRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authLogout']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -982,6 +1374,18 @@ export const AuthApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.authMe(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AuthApi.authMe']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * 
+         * @param {AuthRefreshRequest} authRefreshRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async authRefresh(authRefreshRequest: AuthRefreshRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthRefresh200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.authRefresh(authRefreshRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AuthApi.authRefresh']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -1016,11 +1420,29 @@ export const AuthApiFactory = function (configuration?: Configuration, basePath?
         },
         /**
          * 
+         * @param {AuthLogoutRequest} [authLogoutRequest] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authLogout(authLogoutRequest?: AuthLogoutRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLogout200Response> {
+            return localVarFp.authLogout(authLogoutRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         authMe(options?: RawAxiosRequestConfig): AxiosPromise<AuthMe200Response> {
             return localVarFp.authMe(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * 
+         * @param {AuthRefreshRequest} authRefreshRequest 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        authRefresh(authRefreshRequest: AuthRefreshRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthRefresh200Response> {
+            return localVarFp.authRefresh(authRefreshRequest, options).then((request) => request(axios, basePath));
         },
         /**
          * 
@@ -1050,11 +1472,31 @@ export class AuthApi extends BaseAPI {
 
     /**
      * 
+     * @param {AuthLogoutRequest} [authLogoutRequest] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public authLogout(authLogoutRequest?: AuthLogoutRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authLogout(authLogoutRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
     public authMe(options?: RawAxiosRequestConfig) {
         return AuthApiFp(this.configuration).authMe(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * 
+     * @param {AuthRefreshRequest} authRefreshRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public authRefresh(authRefreshRequest: AuthRefreshRequest, options?: RawAxiosRequestConfig) {
+        return AuthApiFp(this.configuration).authRefresh(authRefreshRequest, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -1166,6 +1608,84 @@ export class DefaultApi extends BaseAPI {
 export const DriversApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.
+         * @summary Mis viajes activos
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        driverMyTripsActive: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/drivers/my-trips/active`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Lista de viajes completados o cancelados para el driver autenticado.
+         * @summary Mis viajes (historial)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        driverMyTripsHistory: async (limit?: number, cursor?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/drivers/my-trips/history`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (cursor !== undefined) {
+                localVarQueryParameter['cursor'] = cursor;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.
          * @summary Actualizar estado del driver
          * @param {DriverUpdateStatusRequest} [driverUpdateStatusRequest] 
@@ -1251,6 +1771,32 @@ export const DriversApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = DriversApiAxiosParamCreator(configuration)
     return {
         /**
+         * Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.
+         * @summary Mis viajes activos
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async driverMyTripsActive(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DriverMyTripsActive200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.driverMyTripsActive(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DriversApi.driverMyTripsActive']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Lista de viajes completados o cancelados para el driver autenticado.
+         * @summary Mis viajes (historial)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async driverMyTripsHistory(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DriverMyTripsHistory200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.driverMyTripsHistory(limit, cursor, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['DriversApi.driverMyTripsHistory']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.
          * @summary Actualizar estado del driver
          * @param {DriverUpdateStatusRequest} [driverUpdateStatusRequest] 
@@ -1286,6 +1832,26 @@ export const DriversApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = DriversApiFp(configuration)
     return {
         /**
+         * Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.
+         * @summary Mis viajes activos
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        driverMyTripsActive(options?: RawAxiosRequestConfig): AxiosPromise<DriverMyTripsActive200Response> {
+            return localVarFp.driverMyTripsActive(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Lista de viajes completados o cancelados para el driver autenticado.
+         * @summary Mis viajes (historial)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        driverMyTripsHistory(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig): AxiosPromise<DriverMyTripsHistory200Response> {
+            return localVarFp.driverMyTripsHistory(limit, cursor, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.
          * @summary Actualizar estado del driver
          * @param {DriverUpdateStatusRequest} [driverUpdateStatusRequest] 
@@ -1312,6 +1878,28 @@ export const DriversApiFactory = function (configuration?: Configuration, basePa
  * DriversApi - object-oriented interface
  */
 export class DriversApi extends BaseAPI {
+    /**
+     * Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.
+     * @summary Mis viajes activos
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public driverMyTripsActive(options?: RawAxiosRequestConfig) {
+        return DriversApiFp(this.configuration).driverMyTripsActive(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Lista de viajes completados o cancelados para el driver autenticado.
+     * @summary Mis viajes (historial)
+     * @param {number} [limit] 
+     * @param {string | null} [cursor] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public driverMyTripsHistory(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig) {
+        return DriversApiFp(this.configuration).driverMyTripsHistory(limit, cursor, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Driver reporta su estado (IDLE/ON_TRIP/etc.). Requiere JWT.
      * @summary Actualizar estado del driver
@@ -1343,7 +1931,254 @@ export class DriversApi extends BaseAPI {
 export const PaymentsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.
+         * Agregados de pagos por fecha/ciudad/estado/m�todo. Si format=csv, devuelve text/csv.
+         * @summary Reporte de pagos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsReportGroupByEnum} [groupBy] 
+         * @param {AdminPaymentsReportFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsReport: async (city?: string, from?: string, to?: string, groupBy?: AdminPaymentsReportGroupByEnum, format?: AdminPaymentsReportFormatEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/admin/payments/report`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (city !== undefined) {
+                localVarQueryParameter['city'] = city;
+            }
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = (from as any instanceof Date) ?
+                    (from as any).toISOString() :
+                    from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = (to as any instanceof Date) ?
+                    (to as any).toISOString() :
+                    to;
+            }
+
+            if (groupBy !== undefined) {
+                localVarQueryParameter['groupBy'] = groupBy;
+            }
+
+            if (format !== undefined) {
+                localVarQueryParameter['format'] = format;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Conteo e importe por estado (PENDING/AUTHORIZED/PAID/FAILED/REFUNDED). CSV disponible.
+         * @summary Resumen por estado de pago (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsSummaryStatusFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsSummaryStatus: async (city?: string, from?: string, to?: string, format?: AdminPaymentsSummaryStatusFormatEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/admin/payments/summary-status`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (city !== undefined) {
+                localVarQueryParameter['city'] = city;
+            }
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = (from as any instanceof Date) ?
+                    (from as any).toISOString() :
+                    from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = (to as any instanceof Date) ?
+                    (to as any).toISOString() :
+                    to;
+            }
+
+            if (format !== undefined) {
+                localVarQueryParameter['format'] = format;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Ingresos por driver con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top drivers por ingresos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopDriversFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsTopDrivers: async (city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopDriversFormatEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/admin/payments/top-drivers`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (city !== undefined) {
+                localVarQueryParameter['city'] = city;
+            }
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = (from as any instanceof Date) ?
+                    (from as any).toISOString() :
+                    from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = (to as any instanceof Date) ?
+                    (to as any).toISOString() :
+                    to;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (format !== undefined) {
+                localVarQueryParameter['format'] = format;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Gasto por rider con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top riders por gasto (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopRidersFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsTopRiders: async (city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopRidersFormatEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/admin/payments/top-riders`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (city !== undefined) {
+                localVarQueryParameter['city'] = city;
+            }
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = (from as any instanceof Date) ?
+                    (from as any).toISOString() :
+                    from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = (to as any instanceof Date) ?
+                    (to as any).toISOString() :
+                    to;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (format !== undefined) {
+                localVarQueryParameter['format'] = format;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Lista auditorias de reembolso/cancelación con filtros y CSV. Si format=csv, devuelve text/csv.
          * @summary Listar refunds (ADMIN)
          * @param {string} [userId] 
          * @param {string} [city] 
@@ -1488,7 +2323,7 @@ export const PaymentsApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Obtener pago por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -1684,7 +2519,7 @@ export const PaymentsApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Lista auditorias de reembolso/cancelación del pago de un trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Refunds por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -1801,7 +2636,74 @@ export const PaymentsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = PaymentsApiAxiosParamCreator(configuration)
     return {
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.
+         * Agregados de pagos por fecha/ciudad/estado/m�todo. Si format=csv, devuelve text/csv.
+         * @summary Reporte de pagos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsReportGroupByEnum} [groupBy] 
+         * @param {AdminPaymentsReportFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async adminPaymentsReport(city?: string, from?: string, to?: string, groupBy?: AdminPaymentsReportGroupByEnum, format?: AdminPaymentsReportFormatEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminPaymentsReport200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.adminPaymentsReport(city, from, to, groupBy, format, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PaymentsApi.adminPaymentsReport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Conteo e importe por estado (PENDING/AUTHORIZED/PAID/FAILED/REFUNDED). CSV disponible.
+         * @summary Resumen por estado de pago (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsSummaryStatusFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async adminPaymentsSummaryStatus(city?: string, from?: string, to?: string, format?: AdminPaymentsSummaryStatusFormatEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminPaymentsSummaryStatus200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.adminPaymentsSummaryStatus(city, from, to, format, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PaymentsApi.adminPaymentsSummaryStatus']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Ingresos por driver con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top drivers por ingresos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopDriversFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async adminPaymentsTopDrivers(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopDriversFormatEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminPaymentsTopDrivers200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.adminPaymentsTopDrivers(city, from, to, limit, format, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PaymentsApi.adminPaymentsTopDrivers']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Gasto por rider con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top riders por gasto (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopRidersFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async adminPaymentsTopRiders(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopRidersFormatEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AdminPaymentsTopRiders200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.adminPaymentsTopRiders(city, from, to, limit, format, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['PaymentsApi.adminPaymentsTopRiders']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Lista auditorias de reembolso/cancelación con filtros y CSV. Si format=csv, devuelve text/csv.
          * @summary Listar refunds (ADMIN)
          * @param {string} [userId] 
          * @param {string} [city] 
@@ -1845,7 +2747,7 @@ export const PaymentsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Obtener pago por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -1905,7 +2807,7 @@ export const PaymentsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Lista auditorias de reembolso/cancelación del pago de un trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Refunds por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -1924,7 +2826,7 @@ export const PaymentsApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest: PaymentsSetDefaultMethodRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DriverUpdateStatus200Response>> {
+        async paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest: PaymentsSetDefaultMethodRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<AuthLogout200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['PaymentsApi.paymentsSetDefaultMethod']?.[localVarOperationServerIndex]?.url;
@@ -1952,7 +2854,62 @@ export const PaymentsApiFactory = function (configuration?: Configuration, baseP
     const localVarFp = PaymentsApiFp(configuration)
     return {
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.
+         * Agregados de pagos por fecha/ciudad/estado/m�todo. Si format=csv, devuelve text/csv.
+         * @summary Reporte de pagos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsReportGroupByEnum} [groupBy] 
+         * @param {AdminPaymentsReportFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsReport(city?: string, from?: string, to?: string, groupBy?: AdminPaymentsReportGroupByEnum, format?: AdminPaymentsReportFormatEnum, options?: RawAxiosRequestConfig): AxiosPromise<AdminPaymentsReport200Response> {
+            return localVarFp.adminPaymentsReport(city, from, to, groupBy, format, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Conteo e importe por estado (PENDING/AUTHORIZED/PAID/FAILED/REFUNDED). CSV disponible.
+         * @summary Resumen por estado de pago (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {AdminPaymentsSummaryStatusFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsSummaryStatus(city?: string, from?: string, to?: string, format?: AdminPaymentsSummaryStatusFormatEnum, options?: RawAxiosRequestConfig): AxiosPromise<AdminPaymentsSummaryStatus200Response> {
+            return localVarFp.adminPaymentsSummaryStatus(city, from, to, format, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Ingresos por driver con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top drivers por ingresos (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopDriversFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsTopDrivers(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopDriversFormatEnum, options?: RawAxiosRequestConfig): AxiosPromise<AdminPaymentsTopDrivers200Response> {
+            return localVarFp.adminPaymentsTopDrivers(city, from, to, limit, format, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Gasto por rider con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+         * @summary Top riders por gasto (ADMIN)
+         * @param {string} [city] 
+         * @param {string} [from] 
+         * @param {string} [to] 
+         * @param {number} [limit] 
+         * @param {AdminPaymentsTopRidersFormatEnum} [format] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        adminPaymentsTopRiders(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopRidersFormatEnum, options?: RawAxiosRequestConfig): AxiosPromise<AdminPaymentsTopRiders200Response> {
+            return localVarFp.adminPaymentsTopRiders(city, from, to, limit, format, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Lista auditorias de reembolso/cancelación con filtros y CSV. Si format=csv, devuelve text/csv.
          * @summary Listar refunds (ADMIN)
          * @param {string} [userId] 
          * @param {string} [city] 
@@ -1987,7 +2944,7 @@ export const PaymentsApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.paymentsCreateSetupIntent(options).then((request) => request(axios, basePath));
         },
         /**
-         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Obtener pago por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -2035,7 +2992,7 @@ export const PaymentsApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.paymentsRefundByTrip(tripId, paymentsRefundByTripRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+         * Lista auditorias de reembolso/cancelación del pago de un trip. Requiere JWT y ser due�o del viaje o ADMIN.
          * @summary Refunds por tripId
          * @param {string} tripId 
          * @param {*} [options] Override http request option.
@@ -2051,7 +3008,7 @@ export const PaymentsApiFactory = function (configuration?: Configuration, baseP
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest: PaymentsSetDefaultMethodRequest, options?: RawAxiosRequestConfig): AxiosPromise<DriverUpdateStatus200Response> {
+        paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest: PaymentsSetDefaultMethodRequest, options?: RawAxiosRequestConfig): AxiosPromise<AuthLogout200Response> {
             return localVarFp.paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest, options).then((request) => request(axios, basePath));
         },
         /**
@@ -2071,7 +3028,66 @@ export const PaymentsApiFactory = function (configuration?: Configuration, baseP
  */
 export class PaymentsApi extends BaseAPI {
     /**
-     * Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.
+     * Agregados de pagos por fecha/ciudad/estado/m�todo. Si format=csv, devuelve text/csv.
+     * @summary Reporte de pagos (ADMIN)
+     * @param {string} [city] 
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {AdminPaymentsReportGroupByEnum} [groupBy] 
+     * @param {AdminPaymentsReportFormatEnum} [format] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public adminPaymentsReport(city?: string, from?: string, to?: string, groupBy?: AdminPaymentsReportGroupByEnum, format?: AdminPaymentsReportFormatEnum, options?: RawAxiosRequestConfig) {
+        return PaymentsApiFp(this.configuration).adminPaymentsReport(city, from, to, groupBy, format, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Conteo e importe por estado (PENDING/AUTHORIZED/PAID/FAILED/REFUNDED). CSV disponible.
+     * @summary Resumen por estado de pago (ADMIN)
+     * @param {string} [city] 
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {AdminPaymentsSummaryStatusFormatEnum} [format] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public adminPaymentsSummaryStatus(city?: string, from?: string, to?: string, format?: AdminPaymentsSummaryStatusFormatEnum, options?: RawAxiosRequestConfig) {
+        return PaymentsApiFp(this.configuration).adminPaymentsSummaryStatus(city, from, to, format, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Ingresos por driver con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+     * @summary Top drivers por ingresos (ADMIN)
+     * @param {string} [city] 
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {number} [limit] 
+     * @param {AdminPaymentsTopDriversFormatEnum} [format] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public adminPaymentsTopDrivers(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopDriversFormatEnum, options?: RawAxiosRequestConfig) {
+        return PaymentsApiFp(this.configuration).adminPaymentsTopDrivers(city, from, to, limit, format, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Gasto por rider con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+     * @summary Top riders por gasto (ADMIN)
+     * @param {string} [city] 
+     * @param {string} [from] 
+     * @param {string} [to] 
+     * @param {number} [limit] 
+     * @param {AdminPaymentsTopRidersFormatEnum} [format] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public adminPaymentsTopRiders(city?: string, from?: string, to?: string, limit?: number, format?: AdminPaymentsTopRidersFormatEnum, options?: RawAxiosRequestConfig) {
+        return PaymentsApiFp(this.configuration).adminPaymentsTopRiders(city, from, to, limit, format, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Lista auditorias de reembolso/cancelación con filtros y CSV. Si format=csv, devuelve text/csv.
      * @summary Listar refunds (ADMIN)
      * @param {string} [userId] 
      * @param {string} [city] 
@@ -2109,7 +3125,7 @@ export class PaymentsApi extends BaseAPI {
     }
 
     /**
-     * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+     * Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser due�o del viaje o ADMIN.
      * @summary Obtener pago por tripId
      * @param {string} tripId 
      * @param {*} [options] Override http request option.
@@ -2161,7 +3177,7 @@ export class PaymentsApi extends BaseAPI {
     }
 
     /**
-     * Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+     * Lista auditorias de reembolso/cancelación del pago de un trip. Requiere JWT y ser due�o del viaje o ADMIN.
      * @summary Refunds por tripId
      * @param {string} tripId 
      * @param {*} [options] Override http request option.
@@ -2193,6 +3209,34 @@ export class PaymentsApi extends BaseAPI {
     }
 }
 
+export const AdminPaymentsReportGroupByEnum = {
+    Day: 'day',
+    City: 'city',
+    Status: 'status',
+    CityDay: 'city_day',
+    Method: 'method'
+} as const;
+export type AdminPaymentsReportGroupByEnum = typeof AdminPaymentsReportGroupByEnum[keyof typeof AdminPaymentsReportGroupByEnum];
+export const AdminPaymentsReportFormatEnum = {
+    Json: 'json',
+    Csv: 'csv'
+} as const;
+export type AdminPaymentsReportFormatEnum = typeof AdminPaymentsReportFormatEnum[keyof typeof AdminPaymentsReportFormatEnum];
+export const AdminPaymentsSummaryStatusFormatEnum = {
+    Json: 'json',
+    Csv: 'csv'
+} as const;
+export type AdminPaymentsSummaryStatusFormatEnum = typeof AdminPaymentsSummaryStatusFormatEnum[keyof typeof AdminPaymentsSummaryStatusFormatEnum];
+export const AdminPaymentsTopDriversFormatEnum = {
+    Json: 'json',
+    Csv: 'csv'
+} as const;
+export type AdminPaymentsTopDriversFormatEnum = typeof AdminPaymentsTopDriversFormatEnum[keyof typeof AdminPaymentsTopDriversFormatEnum];
+export const AdminPaymentsTopRidersFormatEnum = {
+    Json: 'json',
+    Csv: 'csv'
+} as const;
+export type AdminPaymentsTopRidersFormatEnum = typeof AdminPaymentsTopRidersFormatEnum[keyof typeof AdminPaymentsTopRidersFormatEnum];
 export const AdminRefundsListFormatEnum = {
     Json: 'json',
     Csv: 'csv'
@@ -2214,12 +3258,127 @@ export type PaymentsListFormatEnum = typeof PaymentsListFormatEnum[keyof typeof 
 
 
 /**
+ * RiderApi - axios parameter creator
+ */
+export const RiderApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Lista los últimos viajes del rider autenticado.
+         * @summary Mis viajes (rider)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        riderMyTrips: async (limit?: number, cursor?: string | null, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/rider/my-trips`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+            if (cursor !== undefined) {
+                localVarQueryParameter['cursor'] = cursor;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * RiderApi - functional programming interface
+ */
+export const RiderApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = RiderApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Lista los últimos viajes del rider autenticado.
+         * @summary Mis viajes (rider)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async riderMyTrips(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RiderMyTrips200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.riderMyTrips(limit, cursor, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['RiderApi.riderMyTrips']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * RiderApi - factory interface
+ */
+export const RiderApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = RiderApiFp(configuration)
+    return {
+        /**
+         * Lista los últimos viajes del rider autenticado.
+         * @summary Mis viajes (rider)
+         * @param {number} [limit] 
+         * @param {string | null} [cursor] 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        riderMyTrips(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig): AxiosPromise<RiderMyTrips200Response> {
+            return localVarFp.riderMyTrips(limit, cursor, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * RiderApi - object-oriented interface
+ */
+export class RiderApi extends BaseAPI {
+    /**
+     * Lista los últimos viajes del rider autenticado.
+     * @summary Mis viajes (rider)
+     * @param {number} [limit] 
+     * @param {string | null} [cursor] 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public riderMyTrips(limit?: number, cursor?: string | null, options?: RawAxiosRequestConfig) {
+        return RiderApiFp(this.configuration).riderMyTrips(limit, cursor, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * TripsApi - axios parameter creator
  */
 export const TripsApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         * El conductor acepta el viaje asignado.
+         * @summary Aceptar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2256,7 +3415,8 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * El conductor llegï¿½ al punto de recogida.
+         * @summary Arribo del conductor
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2293,7 +3453,8 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
+         * @summary Cancelar viaje (rider)
          * @param {string} id 
          * @param {TripsCancelRequest} [tripsCancelRequest] 
          * @param {*} [options] Override http request option.
@@ -2334,7 +3495,8 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
+         * @summary Completar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2371,7 +3533,45 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Crea un viaje y asigna el conductor disponible más cercano.
+         * Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+         * @summary UbicaciÃ³n actual del driver para el viaje
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        tripsDriverLocation: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('tripsDriverLocation', 'id', id)
+            const localVarPath = `/trips/{id}/driver-location`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication bearerAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
          * @summary Solicitar viaje
          * @param {TripsRequestRequest} tripsRequestRequest 
          * @param {*} [options] Override http request option.
@@ -2411,7 +3611,7 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
          * @summary Trip live updates (SSE)
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -2449,12 +3649,14 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * 
+         * Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
+         * @summary Iniciar viaje
          * @param {string} id 
+         * @param {TripsStartRequest} [tripsStartRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tripsStart: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        tripsStart: async (id: string, tripsStartRequest?: TripsStartRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'id' is not null or undefined
             assertParamExists('tripsStart', 'id', id)
             const localVarPath = `/trips/{id}/start`
@@ -2476,9 +3678,12 @@ export const TripsApiAxiosParamCreator = function (configuration?: Configuration
 
 
     
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(tripsStartRequest, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -2495,7 +3700,8 @@ export const TripsApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = TripsApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         * El conductor acepta el viaje asignado.
+         * @summary Aceptar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2507,44 +3713,60 @@ export const TripsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * El conductor llegï¿½ al punto de recogida.
+         * @summary Arribo del conductor
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async tripsArrived(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsRequest200Response>> {
+        async tripsArrived(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsArrived200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.tripsArrived(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TripsApi.tripsArrived']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
+         * @summary Cancelar viaje (rider)
          * @param {string} id 
          * @param {TripsCancelRequest} [tripsCancelRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async tripsCancel(id: string, tripsCancelRequest?: TripsCancelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsRequest200Response>> {
+        async tripsCancel(id: string, tripsCancelRequest?: TripsCancelRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsCancel200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.tripsCancel(id, tripsCancelRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TripsApi.tripsCancel']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
+         * @summary Completar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async tripsComplete(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsRequest200Response>> {
+        async tripsComplete(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsComplete200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.tripsComplete(id, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TripsApi.tripsComplete']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Crea un viaje y asigna el conductor disponible más cercano.
+         * Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+         * @summary UbicaciÃ³n actual del driver para el viaje
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async tripsDriverLocation(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsDriverLocation200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.tripsDriverLocation(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TripsApi.tripsDriverLocation']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
          * @summary Solicitar viaje
          * @param {TripsRequestRequest} tripsRequestRequest 
          * @param {*} [options] Override http request option.
@@ -2557,7 +3779,7 @@ export const TripsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
          * @summary Trip live updates (SSE)
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -2570,13 +3792,15 @@ export const TripsApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
+         * @summary Iniciar viaje
          * @param {string} id 
+         * @param {TripsStartRequest} [tripsStartRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async tripsStart(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsRequest200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.tripsStart(id, options);
+        async tripsStart(id: string, tripsStartRequest?: TripsStartRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<TripsStart200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.tripsStart(id, tripsStartRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TripsApi.tripsStart']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -2591,7 +3815,8 @@ export const TripsApiFactory = function (configuration?: Configuration, basePath
     const localVarFp = TripsApiFp(configuration)
     return {
         /**
-         * 
+         * El conductor acepta el viaje asignado.
+         * @summary Aceptar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -2600,35 +3825,48 @@ export const TripsApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.tripsAccept(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * El conductor llegï¿½ al punto de recogida.
+         * @summary Arribo del conductor
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tripsArrived(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsRequest200Response> {
+        tripsArrived(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsArrived200Response> {
             return localVarFp.tripsArrived(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
+         * @summary Cancelar viaje (rider)
          * @param {string} id 
          * @param {TripsCancelRequest} [tripsCancelRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tripsCancel(id: string, tripsCancelRequest?: TripsCancelRequest, options?: RawAxiosRequestConfig): AxiosPromise<TripsRequest200Response> {
+        tripsCancel(id: string, tripsCancelRequest?: TripsCancelRequest, options?: RawAxiosRequestConfig): AxiosPromise<TripsCancel200Response> {
             return localVarFp.tripsCancel(id, tripsCancelRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
+         * @summary Completar viaje
          * @param {string} id 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tripsComplete(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsRequest200Response> {
+        tripsComplete(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsComplete200Response> {
             return localVarFp.tripsComplete(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Crea un viaje y asigna el conductor disponible más cercano.
+         * Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+         * @summary UbicaciÃ³n actual del driver para el viaje
+         * @param {string} id 
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        tripsDriverLocation(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsDriverLocation200Response> {
+            return localVarFp.tripsDriverLocation(id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
          * @summary Solicitar viaje
          * @param {TripsRequestRequest} tripsRequestRequest 
          * @param {*} [options] Override http request option.
@@ -2638,7 +3876,7 @@ export const TripsApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.tripsRequest(tripsRequestRequest, options).then((request) => request(axios, basePath));
         },
         /**
-         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+         * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
          * @summary Trip live updates (SSE)
          * @param {string} id 
          * @param {*} [options] Override http request option.
@@ -2648,13 +3886,15 @@ export const TripsApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.tripsSseById(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
+         * @summary Iniciar viaje
          * @param {string} id 
+         * @param {TripsStartRequest} [tripsStartRequest] 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        tripsStart(id: string, options?: RawAxiosRequestConfig): AxiosPromise<TripsRequest200Response> {
-            return localVarFp.tripsStart(id, options).then((request) => request(axios, basePath));
+        tripsStart(id: string, tripsStartRequest?: TripsStartRequest, options?: RawAxiosRequestConfig): AxiosPromise<TripsStart200Response> {
+            return localVarFp.tripsStart(id, tripsStartRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -2664,7 +3904,8 @@ export const TripsApiFactory = function (configuration?: Configuration, basePath
  */
 export class TripsApi extends BaseAPI {
     /**
-     * 
+     * El conductor acepta el viaje asignado.
+     * @summary Aceptar viaje
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2674,7 +3915,8 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * 
+     * El conductor llegï¿½ al punto de recogida.
+     * @summary Arribo del conductor
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2684,7 +3926,8 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * 
+     * El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
+     * @summary Cancelar viaje (rider)
      * @param {string} id 
      * @param {TripsCancelRequest} [tripsCancelRequest] 
      * @param {*} [options] Override http request option.
@@ -2695,7 +3938,8 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * 
+     * Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
+     * @summary Completar viaje
      * @param {string} id 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -2705,7 +3949,18 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * Crea un viaje y asigna el conductor disponible más cercano.
+     * Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+     * @summary UbicaciÃ³n actual del driver para el viaje
+     * @param {string} id 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     */
+    public tripsDriverLocation(id: string, options?: RawAxiosRequestConfig) {
+        return TripsApiFp(this.configuration).tripsDriverLocation(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
      * @summary Solicitar viaje
      * @param {TripsRequestRequest} tripsRequestRequest 
      * @param {*} [options] Override http request option.
@@ -2716,7 +3971,7 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+     * Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
      * @summary Trip live updates (SSE)
      * @param {string} id 
      * @param {*} [options] Override http request option.
@@ -2727,13 +3982,15 @@ export class TripsApi extends BaseAPI {
     }
 
     /**
-     * 
+     * Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
+     * @summary Iniciar viaje
      * @param {string} id 
+     * @param {TripsStartRequest} [tripsStartRequest] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      */
-    public tripsStart(id: string, options?: RawAxiosRequestConfig) {
-        return TripsApiFp(this.configuration).tripsStart(id, options).then((request) => request(this.axios, this.basePath));
+    public tripsStart(id: string, tripsStartRequest?: TripsStartRequest, options?: RawAxiosRequestConfig) {
+        return TripsApiFp(this.configuration).tripsStart(id, tripsStartRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -2833,7 +4090,7 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async usersDeletePushToken(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UsersRegisterPushToken200Response>> {
+        async usersDeletePushToken(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DriverUpdateStatus200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.usersDeletePushToken(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UsersApi.usersDeletePushToken']?.[localVarOperationServerIndex]?.url;
@@ -2846,7 +4103,7 @@ export const UsersApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async usersRegisterPushToken(usersRegisterPushTokenRequest: UsersRegisterPushTokenRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<UsersRegisterPushToken200Response>> {
+        async usersRegisterPushToken(usersRegisterPushTokenRequest: UsersRegisterPushTokenRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DriverUpdateStatus200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.usersRegisterPushToken(usersRegisterPushTokenRequest, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UsersApi.usersRegisterPushToken']?.[localVarOperationServerIndex]?.url;
@@ -2867,7 +4124,7 @@ export const UsersApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        usersDeletePushToken(options?: RawAxiosRequestConfig): AxiosPromise<UsersRegisterPushToken200Response> {
+        usersDeletePushToken(options?: RawAxiosRequestConfig): AxiosPromise<DriverUpdateStatus200Response> {
             return localVarFp.usersDeletePushToken(options).then((request) => request(axios, basePath));
         },
         /**
@@ -2877,7 +4134,7 @@ export const UsersApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        usersRegisterPushToken(usersRegisterPushTokenRequest: UsersRegisterPushTokenRequest, options?: RawAxiosRequestConfig): AxiosPromise<UsersRegisterPushToken200Response> {
+        usersRegisterPushToken(usersRegisterPushTokenRequest: UsersRegisterPushTokenRequest, options?: RawAxiosRequestConfig): AxiosPromise<DriverUpdateStatus200Response> {
             return localVarFp.usersRegisterPushToken(usersRegisterPushTokenRequest, options).then((request) => request(axios, basePath));
         },
     };

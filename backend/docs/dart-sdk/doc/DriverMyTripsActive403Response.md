@@ -1,8 +1,8 @@
-# openapi.model.DriverMyTripsActive403Response
+# taxi_openapi.model.DriverMyTripsActive403Response
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

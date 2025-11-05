@@ -1,8 +1,8 @@
-# openapi.api.TripsApi
+# taxi_openapi.api.TripsApi
 
 ## Load the API package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 All URIs are relative to *http://localhost:8080*
@@ -13,6 +13,7 @@ Method | HTTP request | Description
 [**tripsArrived**](TripsApi.md#tripsarrived) | **POST** /trips/{id}/arrived | Arribo del conductor
 [**tripsCancel**](TripsApi.md#tripscancel) | **POST** /trips/{id}/cancel | Cancelar viaje (rider)
 [**tripsComplete**](TripsApi.md#tripscomplete) | **POST** /trips/{id}/complete | Completar viaje
+[**tripsDriverLocation**](TripsApi.md#tripsdriverlocation) | **GET** /trips/{id}/driver-location | UbicaciÃ³n actual del driver para el viaje
 [**tripsRequest**](TripsApi.md#tripsrequest) | **POST** /trips/request | Solicitar viaje
 [**tripsSseById**](TripsApi.md#tripsssebyid) | **GET** /trips/{id}/sse | Trip live updates (SSE)
 [**tripsStart**](TripsApi.md#tripsstart) | **POST** /trips/{id}/start | Iniciar viaje
@@ -27,9 +28,9 @@ El conductor acepta el viaje asignado.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 
 try {
@@ -62,17 +63,17 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsArrived**
-> TripsRequest200Response tripsArrived(id)
+> TripsArrived200Response tripsArrived(id)
 
 Arribo del conductor
 
-El conductor llega al punto de recogida.
+El conductor llegï¿½ al punto de recogida.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 
 try {
@@ -91,7 +92,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**TripsRequest200Response**](TripsRequest200Response.md)
+[**TripsArrived200Response**](TripsArrived200Response.md)
 
 ### Authorization
 
@@ -105,17 +106,17 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsCancel**
-> TripsRequest200Response tripsCancel(id, tripsCancelRequest)
+> TripsCancel200Response tripsCancel(id, tripsCancelRequest)
 
 Cancelar viaje (rider)
 
-El rider cancela el viaje; puede aplicar fee segÃºn estado y reglas.
+El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 final TripsCancelRequest tripsCancelRequest = ; // TripsCancelRequest | 
 
@@ -136,7 +137,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**TripsRequest200Response**](TripsRequest200Response.md)
+[**TripsCancel200Response**](TripsCancel200Response.md)
 
 ### Authorization
 
@@ -150,7 +151,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsComplete**
-> TripsRequest200Response tripsComplete(id)
+> TripsComplete200Response tripsComplete(id)
 
 Completar viaje
 
@@ -158,9 +159,9 @@ Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 
 try {
@@ -179,7 +180,50 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**TripsRequest200Response**](TripsRequest200Response.md)
+[**TripsComplete200Response**](TripsComplete200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **tripsDriverLocation**
+> TripsDriverLocation200Response tripsDriverLocation(id)
+
+UbicaciÃ³n actual del driver para el viaje
+
+Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+
+### Example
+```dart
+import 'package:taxi_openapi/api.dart';
+
+final api = TaxiOpenapi().getTripsApi();
+final String id = id_example; // String | 
+
+try {
+    final response = api.tripsDriverLocation(id);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling TripsApi->tripsDriverLocation: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **String**|  | 
+
+### Return type
+
+[**TripsDriverLocation200Response**](TripsDriverLocation200Response.md)
 
 ### Authorization
 
@@ -201,9 +245,9 @@ Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final TripsRequestRequest tripsRequestRequest = ; // TripsRequestRequest | 
 
 try {
@@ -240,13 +284,13 @@ Name | Type | Description  | Notes
 
 Trip live updates (SSE)
 
-Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 
 try {
@@ -279,17 +323,17 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsStart**
-> TripsRequest200Response tripsStart(id, tripsStartRequest)
+> TripsStart200Response tripsStart(id, tripsStartRequest)
 
 Iniciar viaje
 
-Inicia el viaje; si method=CARD y Stripe estÃ¡ configurado, preautoriza.
+Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getTripsApi();
+final api = TaxiOpenapi().getTripsApi();
 final String id = id_example; // String | 
 final TripsStartRequest tripsStartRequest = ; // TripsStartRequest | 
 
@@ -310,7 +354,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**TripsRequest200Response**](TripsRequest200Response.md)
+[**TripsStart200Response**](TripsStart200Response.md)
 
 ### Authorization
 

@@ -5,6 +5,7 @@ All URIs are relative to *http://localhost:8080*
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
 |[**adminDiagnosticsMatching**](#admindiagnosticsmatching) | **GET** /admin/diagnostics/matching | Diagnostics matching|
+|[**adminDiagnosticsMatchingTest**](#admindiagnosticsmatchingtest) | **POST** /admin/diagnostics/matching/test | Probar matching (PostGIS/Haversine/Idle)|
 |[**adminMetrics**](#adminmetrics) | **GET** /admin/metrics | Prometheus metrics|
 |[**adminTariffsCreate**](#admintariffscreate) | **POST** /admin/tariffs | Crear TariffRule|
 |[**adminTariffsList**](#admintariffslist) | **GET** /admin/tariffs | Listar TariffRule|
@@ -53,13 +54,69 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminDiagnosticsMatchingTest**
+> AdminDiagnosticsMatchingTest200Response adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest)
+
+Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+
+### Example
+
+```typescript
+import {
+    AdminApi,
+    Configuration,
+    AdminDiagnosticsMatchingTestRequest
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new AdminApi(configuration);
+
+let adminDiagnosticsMatchingTestRequest: AdminDiagnosticsMatchingTestRequest; //
+
+const { status, data } = await apiInstance.adminDiagnosticsMatchingTest(
+    adminDiagnosticsMatchingTestRequest
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **adminDiagnosticsMatchingTestRequest** | **AdminDiagnosticsMatchingTestRequest**|  | |
+
+
+### Return type
+
+**AdminDiagnosticsMatchingTest200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **adminMetrics**
 > adminMetrics()
 
-Exposición de métricas en formato Prometheus. Protegido por rol ADMIN.
+ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
 
 ### Example
 
@@ -149,6 +206,8 @@ const { status, data } = await apiInstance.adminTariffsCreate(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -203,6 +262,8 @@ const { status, data } = await apiInstance.adminTariffsList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -258,6 +319,8 @@ const { status, data } = await apiInstance.adminTariffsUpdateById(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
 |**404** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -312,13 +375,15 @@ const { status, data } = await apiInstance.adminTripsList(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
+|**403** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **metricsPublic**
 > metricsPublic()
 
-Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN está definido o si METRICS_PUBLIC=false.
+Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRICS_TOKEN estÃ¡ definido o si METRICS_PUBLIC=false.
 
 ### Example
 

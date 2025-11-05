@@ -1,8 +1,8 @@
-# openapi.model.AdminDiagnosticsMatching200ResponseEnv
+# taxi_openapi.model.AdminDiagnosticsMatching200ResponseEnv
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

@@ -80,7 +80,7 @@ export default async function adminTariffRoutes(app: FastifyInstance) {
   app.post(
     '/admin/tariffs',
     { schema: { operationId: 'adminTariffsCreate', tags: ['admin'], summary: 'Crear TariffRule', description: 'Crea una regla y opcionalmente desactiva reglas activas previas de la misma ciudad.', body: ruleBody, response: { 200: ruleSchema, 401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } } } }, preHandler: app.auth.requireRole('ADMIN') },
-    async (req, reply) => {
+    async (req: any, reply) => {
       const b = (req.body || {}) as any
       if (b.deactivateOld) {
         await prisma.tariffRule.updateMany({ where: { city: b.city, active: true }, data: { active: false } })
@@ -97,6 +97,11 @@ export default async function adminTariffRoutes(app: FastifyInstance) {
           notes: b.notes ?? null,
         } as any)
       })
+      // Audit
+      try {
+        const adminUserId = req.user?.id as string | undefined
+        await prisma.$executeRawUnsafe('INSERT INTO "TariffAudit" ("adminUserId", action, "tariffRuleId", before, after) VALUES ($1,$2,$3,$4,$5)', adminUserId || null, 'CREATE', rule.id, null, JSON.stringify(rule))
+      } catch {}
       return reply.send(rule)
     }
   )
@@ -105,7 +110,7 @@ export default async function adminTariffRoutes(app: FastifyInstance) {
   app.patch(
     '/admin/tariffs/:id',
     { schema: { operationId: 'adminTariffsUpdateById', tags: ['admin'], summary: 'Actualizar TariffRule', description: 'Actualiza campos de una regla por id.', params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } } }, body: rulePatch, response: { 200: ruleSchema, 404: { type: 'object', properties: { error: { type: 'string' } } }, 401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } } } }, preHandler: app.auth.requireRole('ADMIN') },
-    async (req, reply) => {
+    async (req: any, reply) => {
       const id = (req.params as any).id as string
       const b = (req.body || {}) as any
       const found: any = await prisma.tariffRule.findUnique({ where: { id } })
@@ -127,6 +132,11 @@ export default async function adminTariffRoutes(app: FastifyInstance) {
         cancellationFeeArrivedUsd: (b.cancellationFeeArrivedUsd ?? found.cancellationFeeArrivedUsd) as any,
         notes: b.notes ?? found.notes,
       } as any) })
+      // Audit
+      try {
+        const adminUserId = req.user?.id as string | undefined
+        await prisma.$executeRawUnsafe('INSERT INTO "TariffAudit" ("adminUserId", action, "tariffRuleId", before, after) VALUES ($1,$2,$3,$4,$5)', adminUserId || null, 'UPDATE', id, JSON.stringify(found), JSON.stringify(rule))
+      } catch {}
       return reply.send(rule)
     }
   )

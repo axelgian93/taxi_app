@@ -1,8 +1,8 @@
-# openapi.model.PaymentsRefundByTripRequest
+# taxi_openapi.model.PaymentsRefundByTripRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

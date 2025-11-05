@@ -1,8 +1,8 @@
-# openapi.model.AuthRegister400Response
+# taxi_openapi.model.AuthRegister400Response
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

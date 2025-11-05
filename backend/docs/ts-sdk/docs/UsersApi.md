@@ -8,7 +8,7 @@ All URIs are relative to *http://localhost:8080*
 |[**usersRegisterPushToken**](#usersregisterpushtoken) | **POST** /users/me/push-token | Registrar FCM token|
 
 # **usersDeletePushToken**
-> UsersRegisterPushToken200Response usersDeletePushToken()
+> DriverUpdateStatus200Response usersDeletePushToken()
 
 Borra el FCM token asociado al usuario (logout de push notifications).
 
@@ -32,7 +32,7 @@ This endpoint does not have any parameters.
 
 ### Return type
 
-**UsersRegisterPushToken200Response**
+**DriverUpdateStatus200Response**
 
 ### Authorization
 
@@ -48,11 +48,12 @@ This endpoint does not have any parameters.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **usersRegisterPushToken**
-> UsersRegisterPushToken200Response usersRegisterPushToken(usersRegisterPushTokenRequest)
+> DriverUpdateStatus200Response usersRegisterPushToken(usersRegisterPushTokenRequest)
 
 Registra o actualiza el FCM token del usuario logueado.
 
@@ -84,7 +85,7 @@ const { status, data } = await apiInstance.usersRegisterPushToken(
 
 ### Return type
 
-**UsersRegisterPushToken200Response**
+**DriverUpdateStatus200Response**
 
 ### Authorization
 
@@ -100,6 +101,7 @@ const { status, data } = await apiInstance.usersRegisterPushToken(
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 |**200** | Default Response |  -  |
+|**401** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

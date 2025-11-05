@@ -3,7 +3,7 @@
 //
 
 // ignore_for_file: unused_element
-import 'package:openapi/src/model/auth_register201_response_user.dart';
+import 'package:taxi_openapi/src/model/auth_register201_response_user.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 
@@ -13,11 +13,15 @@ part 'auth_register201_response.g.dart';
 ///
 /// Properties:
 /// * [token] 
+/// * [refreshToken] 
 /// * [user] 
 @BuiltValue()
 abstract class AuthRegister201Response implements Built<AuthRegister201Response, AuthRegister201ResponseBuilder> {
   @BuiltValueField(wireName: r'token')
   String? get token;
+
+  @BuiltValueField(wireName: r'refreshToken')
+  String? get refreshToken;
 
   @BuiltValueField(wireName: r'user')
   AuthRegister201ResponseUser? get user;
@@ -49,6 +53,13 @@ class _$AuthRegister201ResponseSerializer implements PrimitiveSerializer<AuthReg
       yield r'token';
       yield serializers.serialize(
         object.token,
+        specifiedType: const FullType(String),
+      );
+    }
+    if (object.refreshToken != null) {
+      yield r'refreshToken';
+      yield serializers.serialize(
+        object.refreshToken,
         specifiedType: const FullType(String),
       );
     }
@@ -88,6 +99,13 @@ class _$AuthRegister201ResponseSerializer implements PrimitiveSerializer<AuthReg
             specifiedType: const FullType(String),
           ) as String;
           result.token = valueDes;
+          break;
+        case r'refreshToken':
+          final valueDes = serializers.deserialize(
+            value,
+            specifiedType: const FullType(String),
+          ) as String;
+          result.refreshToken = valueDes;
           break;
         case r'user':
           final valueDes = serializers.deserialize(

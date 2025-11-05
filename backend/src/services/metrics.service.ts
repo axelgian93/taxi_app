@@ -6,6 +6,13 @@ const counters: CounterMap = {
   matching_haversine: 0,
   matching_idle_fallback: 0,
   sse_connections: 0,
+  login_failures: 0,
+  login_locked: 0,
+  session_revokes_total: 0,
+  admin_trips_queries_total: 0,
+  admin_trips_csv_exports_total: 0,
+  admin_trips_report_queries_total: 0,
+  admin_trips_report_csv_exports_total: 0,
 }
 
 export function incCounter(name: keyof typeof counters) {

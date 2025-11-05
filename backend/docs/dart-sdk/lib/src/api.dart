@@ -4,26 +4,27 @@
 
 import 'package:dio/dio.dart';
 import 'package:built_value/serializer.dart';
-import 'package:openapi/src/serializers.dart';
-import 'package:openapi/src/auth/api_key_auth.dart';
-import 'package:openapi/src/auth/basic_auth.dart';
-import 'package:openapi/src/auth/bearer_auth.dart';
-import 'package:openapi/src/auth/oauth.dart';
-import 'package:openapi/src/api/admin_api.dart';
-import 'package:openapi/src/api/auth_api.dart';
-import 'package:openapi/src/api/default_api.dart';
-import 'package:openapi/src/api/drivers_api.dart';
-import 'package:openapi/src/api/payments_api.dart';
-import 'package:openapi/src/api/trips_api.dart';
-import 'package:openapi/src/api/users_api.dart';
+import 'package:taxi_openapi/src/serializers.dart';
+import 'package:taxi_openapi/src/auth/api_key_auth.dart';
+import 'package:taxi_openapi/src/auth/basic_auth.dart';
+import 'package:taxi_openapi/src/auth/bearer_auth.dart';
+import 'package:taxi_openapi/src/auth/oauth.dart';
+import 'package:taxi_openapi/src/api/admin_api.dart';
+import 'package:taxi_openapi/src/api/auth_api.dart';
+import 'package:taxi_openapi/src/api/default_api.dart';
+import 'package:taxi_openapi/src/api/drivers_api.dart';
+import 'package:taxi_openapi/src/api/payments_api.dart';
+import 'package:taxi_openapi/src/api/rider_api.dart';
+import 'package:taxi_openapi/src/api/trips_api.dart';
+import 'package:taxi_openapi/src/api/users_api.dart';
 
-class Openapi {
+class TaxiOpenapi {
   static const String basePath = r'http://localhost:8080';
 
   final Dio dio;
   final Serializers serializers;
 
-  Openapi({
+  TaxiOpenapi({
     Dio? dio,
     Serializers? serializers,
     String? basePathOverride,
@@ -99,6 +100,12 @@ class Openapi {
   /// by doing that all interceptors will not be executed
   PaymentsApi getPaymentsApi() {
     return PaymentsApi(dio, serializers);
+  }
+
+  /// Get RiderApi instance, base route and serializer can be overridden by a given but be careful,
+  /// by doing that all interceptors will not be executed
+  RiderApi getRiderApi() {
+    return RiderApi(dio, serializers);
   }
 
   /// Get TripsApi instance, base route and serializer can be overridden by a given but be careful,

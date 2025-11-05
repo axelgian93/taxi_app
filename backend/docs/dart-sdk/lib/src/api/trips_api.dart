@@ -8,13 +8,25 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:openapi/src/api_util.dart';
-import 'package:openapi/src/model/auth_register400_response.dart';
-import 'package:openapi/src/model/trips_cancel_request.dart';
-import 'package:openapi/src/model/trips_request200_response.dart';
-import 'package:openapi/src/model/trips_request400_response.dart';
-import 'package:openapi/src/model/trips_request_request.dart';
-import 'package:openapi/src/model/trips_start_request.dart';
+import 'package:taxi_openapi/src/api_util.dart';
+import 'package:taxi_openapi/src/model/driver_my_trips_active403_response.dart';
+import 'package:taxi_openapi/src/model/trips_accept400_response.dart';
+import 'package:taxi_openapi/src/model/trips_accept404_response.dart';
+import 'package:taxi_openapi/src/model/trips_accept409_response.dart';
+import 'package:taxi_openapi/src/model/trips_arrived200_response.dart';
+import 'package:taxi_openapi/src/model/trips_arrived409_response.dart';
+import 'package:taxi_openapi/src/model/trips_cancel200_response.dart';
+import 'package:taxi_openapi/src/model/trips_cancel409_response.dart';
+import 'package:taxi_openapi/src/model/trips_cancel_request.dart';
+import 'package:taxi_openapi/src/model/trips_complete200_response.dart';
+import 'package:taxi_openapi/src/model/trips_complete409_response.dart';
+import 'package:taxi_openapi/src/model/trips_driver_location200_response.dart';
+import 'package:taxi_openapi/src/model/trips_request200_response.dart';
+import 'package:taxi_openapi/src/model/trips_request400_response.dart';
+import 'package:taxi_openapi/src/model/trips_request_request.dart';
+import 'package:taxi_openapi/src/model/trips_start200_response.dart';
+import 'package:taxi_openapi/src/model/trips_start409_response.dart';
+import 'package:taxi_openapi/src/model/trips_start_request.dart';
 
 class TripsApi {
 
@@ -106,7 +118,7 @@ class TripsApi {
   }
 
   /// Arribo del conductor
-  /// El conductor llega al punto de recogida.
+  /// El conductor llegï¿½ al punto de recogida.
   ///
   /// Parameters:
   /// * [id] 
@@ -117,9 +129,9 @@ class TripsApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [TripsRequest200Response] as data
+  /// Returns a [Future] containing a [Response] with a [TripsArrived200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<TripsRequest200Response>> tripsArrived({ 
+  Future<Response<TripsArrived200Response>> tripsArrived({ 
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -155,14 +167,14 @@ class TripsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    TripsRequest200Response? _responseData;
+    TripsArrived200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(TripsRequest200Response),
-      ) as TripsRequest200Response;
+        specifiedType: const FullType(TripsArrived200Response),
+      ) as TripsArrived200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -174,7 +186,7 @@ class TripsApi {
       );
     }
 
-    return Response<TripsRequest200Response>(
+    return Response<TripsArrived200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -187,7 +199,7 @@ class TripsApi {
   }
 
   /// Cancelar viaje (rider)
-  /// El rider cancela el viaje; puede aplicar fee segÃºn estado y reglas.
+  /// El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
   ///
   /// Parameters:
   /// * [id] 
@@ -199,9 +211,9 @@ class TripsApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [TripsRequest200Response] as data
+  /// Returns a [Future] containing a [Response] with a [TripsCancel200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<TripsRequest200Response>> tripsCancel({ 
+  Future<Response<TripsCancel200Response>> tripsCancel({ 
     required String id,
     TripsCancelRequest? tripsCancelRequest,
     CancelToken? cancelToken,
@@ -258,14 +270,14 @@ class TripsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    TripsRequest200Response? _responseData;
+    TripsCancel200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(TripsRequest200Response),
-      ) as TripsRequest200Response;
+        specifiedType: const FullType(TripsCancel200Response),
+      ) as TripsCancel200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -277,7 +289,7 @@ class TripsApi {
       );
     }
 
-    return Response<TripsRequest200Response>(
+    return Response<TripsCancel200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -301,9 +313,9 @@ class TripsApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [TripsRequest200Response] as data
+  /// Returns a [Future] containing a [Response] with a [TripsComplete200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<TripsRequest200Response>> tripsComplete({ 
+  Future<Response<TripsComplete200Response>> tripsComplete({ 
     required String id,
     CancelToken? cancelToken,
     Map<String, dynamic>? headers,
@@ -339,14 +351,14 @@ class TripsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    TripsRequest200Response? _responseData;
+    TripsComplete200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(TripsRequest200Response),
-      ) as TripsRequest200Response;
+        specifiedType: const FullType(TripsComplete200Response),
+      ) as TripsComplete200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -358,7 +370,88 @@ class TripsApi {
       );
     }
 
-    return Response<TripsRequest200Response>(
+    return Response<TripsComplete200Response>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// UbicaciÃ³n actual del driver para el viaje
+  /// Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+  ///
+  /// Parameters:
+  /// * [id] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [TripsDriverLocation200Response] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<TripsDriverLocation200Response>> tripsDriverLocation({ 
+    required String id,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/trips/{id}/driver-location'.replaceAll('{' r'id' '}', encodeQueryParameter(_serializers, id, const FullType(String)).toString());
+    final _options = Options(
+      method: r'GET',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'bearerAuth',
+          },
+        ],
+        ...?extra,
+      },
+      validateStatus: validateStatus,
+    );
+
+    final _response = await _dio.request<Object>(
+      _path,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    TripsDriverLocation200Response? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(TripsDriverLocation200Response),
+      ) as TripsDriverLocation200Response;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<TripsDriverLocation200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,
@@ -472,7 +565,7 @@ class TripsApi {
   }
 
   /// Trip live updates (SSE)
-  /// Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+  /// Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
   ///
   /// Parameters:
   /// * [id] 
@@ -550,7 +643,7 @@ class TripsApi {
   }
 
   /// Iniciar viaje
-  /// Inicia el viaje; si method&#x3D;CARD y Stripe estÃ¡ configurado, preautoriza.
+  /// Inicia el viaje; si method&#x3D;CARD y Stripe estï¿½ configurado, preautoriza.
   ///
   /// Parameters:
   /// * [id] 
@@ -562,9 +655,9 @@ class TripsApi {
   /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
   /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
   ///
-  /// Returns a [Future] containing a [Response] with a [TripsRequest200Response] as data
+  /// Returns a [Future] containing a [Response] with a [TripsStart200Response] as data
   /// Throws [DioException] if API call or serialization fails
-  Future<Response<TripsRequest200Response>> tripsStart({ 
+  Future<Response<TripsStart200Response>> tripsStart({ 
     required String id,
     TripsStartRequest? tripsStartRequest,
     CancelToken? cancelToken,
@@ -621,14 +714,14 @@ class TripsApi {
       onReceiveProgress: onReceiveProgress,
     );
 
-    TripsRequest200Response? _responseData;
+    TripsStart200Response? _responseData;
 
     try {
       final rawResponse = _response.data;
       _responseData = rawResponse == null ? null : _serializers.deserialize(
         rawResponse,
-        specifiedType: const FullType(TripsRequest200Response),
-      ) as TripsRequest200Response;
+        specifiedType: const FullType(TripsStart200Response),
+      ) as TripsStart200Response;
 
     } catch (error, stackTrace) {
       throw DioException(
@@ -640,7 +733,7 @@ class TripsApi {
       );
     }
 
-    return Response<TripsRequest200Response>(
+    return Response<TripsStart200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

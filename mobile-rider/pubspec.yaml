@@ -11,8 +11,12 @@ dependencies:
     sdk: flutter
   dio: ^5.7.0
   http: ^1.2.2
-  openapi:
+  taxi_openapi:
     path: ../backend/docs/dart-sdk
+  shared_preferences: ^2.3.2
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.1
+  geolocator: ^11.1.0
 
 dev_dependencies:
   flutter_test:

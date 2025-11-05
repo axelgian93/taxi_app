@@ -8,16 +8,18 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:openapi/src/api_util.dart';
-import 'package:openapi/src/model/admin_diagnostics_matching200_response.dart';
-import 'package:openapi/src/model/admin_tariffs_create_request.dart';
-import 'package:openapi/src/model/admin_tariffs_list200_response.dart';
-import 'package:openapi/src/model/admin_tariffs_list200_response_items_inner.dart';
-import 'package:openapi/src/model/admin_tariffs_update_by_id_request.dart';
-import 'package:openapi/src/model/admin_trips_list200_response.dart';
-import 'package:openapi/src/model/auth_register400_response.dart';
-import 'package:openapi/src/model/driver_my_trips_active403_response.dart';
-import 'package:openapi/src/model/driver_update_status401_response.dart';
+import 'package:taxi_openapi/src/api_util.dart';
+import 'package:taxi_openapi/src/model/admin_diagnostics_matching200_response.dart';
+import 'package:taxi_openapi/src/model/admin_diagnostics_matching_test200_response.dart';
+import 'package:taxi_openapi/src/model/admin_diagnostics_matching_test_request.dart';
+import 'package:taxi_openapi/src/model/admin_tariffs_create_request.dart';
+import 'package:taxi_openapi/src/model/admin_tariffs_list200_response.dart';
+import 'package:taxi_openapi/src/model/admin_tariffs_list200_response_items_inner.dart';
+import 'package:taxi_openapi/src/model/admin_tariffs_update_by_id_request.dart';
+import 'package:taxi_openapi/src/model/admin_trips_list200_response.dart';
+import 'package:taxi_openapi/src/model/auth_register400_response.dart';
+import 'package:taxi_openapi/src/model/driver_my_trips_active403_response.dart';
+import 'package:taxi_openapi/src/model/driver_update_status401_response.dart';
 
 class AdminApi {
 
@@ -95,6 +97,107 @@ class AdminApi {
     }
 
     return Response<AdminDiagnosticsMatching200Response>(
+      data: _responseData,
+      headers: _response.headers,
+      isRedirect: _response.isRedirect,
+      requestOptions: _response.requestOptions,
+      redirects: _response.redirects,
+      statusCode: _response.statusCode,
+      statusMessage: _response.statusMessage,
+      extra: _response.extra,
+    );
+  }
+
+  /// Probar matching (PostGIS/Haversine/Idle)
+  /// Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+  ///
+  /// Parameters:
+  /// * [adminDiagnosticsMatchingTestRequest] 
+  /// * [cancelToken] - A [CancelToken] that can be used to cancel the operation
+  /// * [headers] - Can be used to add additional headers to the request
+  /// * [extras] - Can be used to add flags to the request
+  /// * [validateStatus] - A [ValidateStatus] callback that can be used to determine request success based on the HTTP status of the response
+  /// * [onSendProgress] - A [ProgressCallback] that can be used to get the send progress
+  /// * [onReceiveProgress] - A [ProgressCallback] that can be used to get the receive progress
+  ///
+  /// Returns a [Future] containing a [Response] with a [AdminDiagnosticsMatchingTest200Response] as data
+  /// Throws [DioException] if API call or serialization fails
+  Future<Response<AdminDiagnosticsMatchingTest200Response>> adminDiagnosticsMatchingTest({ 
+    required AdminDiagnosticsMatchingTestRequest adminDiagnosticsMatchingTestRequest,
+    CancelToken? cancelToken,
+    Map<String, dynamic>? headers,
+    Map<String, dynamic>? extra,
+    ValidateStatus? validateStatus,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    final _path = r'/admin/diagnostics/matching/test';
+    final _options = Options(
+      method: r'POST',
+      headers: <String, dynamic>{
+        ...?headers,
+      },
+      extra: <String, dynamic>{
+        'secure': <Map<String, String>>[
+          {
+            'type': 'http',
+            'scheme': 'bearer',
+            'name': 'bearerAuth',
+          },
+        ],
+        ...?extra,
+      },
+      contentType: 'application/json',
+      validateStatus: validateStatus,
+    );
+
+    dynamic _bodyData;
+
+    try {
+      const _type = FullType(AdminDiagnosticsMatchingTestRequest);
+      _bodyData = _serializers.serialize(adminDiagnosticsMatchingTestRequest, specifiedType: _type);
+
+    } catch(error, stackTrace) {
+      throw DioException(
+         requestOptions: _options.compose(
+          _dio.options,
+          _path,
+        ),
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    final _response = await _dio.request<Object>(
+      _path,
+      data: _bodyData,
+      options: _options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+
+    AdminDiagnosticsMatchingTest200Response? _responseData;
+
+    try {
+      final rawResponse = _response.data;
+      _responseData = rawResponse == null ? null : _serializers.deserialize(
+        rawResponse,
+        specifiedType: const FullType(AdminDiagnosticsMatchingTest200Response),
+      ) as AdminDiagnosticsMatchingTest200Response;
+
+    } catch (error, stackTrace) {
+      throw DioException(
+        requestOptions: _response.requestOptions,
+        response: _response,
+        type: DioExceptionType.unknown,
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
+
+    return Response<AdminDiagnosticsMatchingTest200Response>(
       data: _responseData,
       headers: _response.headers,
       isRedirect: _response.isRedirect,

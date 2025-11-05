@@ -14,6 +14,7 @@ Name | Type | Description | Notes
 **dropoffAddress** | **string** |  | [optional] [default to undefined]
 **distanceKm** | **number** |  | [default to undefined]
 **durationMin** | **number** |  | [default to undefined]
+**preferredMethod** | **string** |  | [optional] [default to undefined]
 
 ## Example
 
@@ -30,6 +31,7 @@ const instance: TripsRequestRequest = {
     dropoffAddress,
     distanceKm,
     durationMin,
+    preferredMethod,
 };
 ```
 

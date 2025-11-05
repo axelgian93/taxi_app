@@ -39,6 +39,13 @@ function ensurePromRegistry() {
       sse_connections: new prom.Gauge({ name: 'app_sse_connections_total', help: 'Total SSE connections (lifetime count)', labelNames: ['app'] }),
       sse_connections_current: new prom.Gauge({ name: 'app_sse_connections_current', help: 'Current SSE connections', labelNames: ['app'] }),
       drivers_available_current: new prom.Gauge({ name: 'app_drivers_available_current', help: 'Current available drivers (IDLE & fresh location)', labelNames: ['app'] }),
+      login_failures: new prom.Gauge({ name: 'app_login_failures_total', help: 'Total login failures', labelNames: ['app'] }),
+      login_locked: new prom.Gauge({ name: 'app_login_locked_total', help: 'Total login locks triggered', labelNames: ['app'] }),
+      session_revokes_total: new prom.Gauge({ name: 'app_session_revokes_total', help: 'Total session revocations', labelNames: ['app'] }),
+      admin_trips_queries_total: new prom.Gauge({ name: 'app_admin_trips_queries_total', help: 'Total /admin/trips queries', labelNames: ['app'] }),
+      admin_trips_csv_exports_total: new prom.Gauge({ name: 'app_admin_trips_csv_exports_total', help: 'Total /admin/trips CSV exports', labelNames: ['app'] }),
+      admin_trips_report_queries_total: new prom.Gauge({ name: 'app_admin_trips_report_queries_total', help: 'Total /admin/trips/report queries', labelNames: ['app'] }),
+      admin_trips_report_csv_exports_total: new prom.Gauge({ name: 'app_admin_trips_report_csv_exports_total', help: 'Total /admin/trips/report CSV exports', labelNames: ['app'] }),
     }
     for (const g of Object.values(gauges)) reg.registerMetric(g)
   }
@@ -67,6 +74,27 @@ export async function getMetricsText(): Promise<string> {
       '# HELP app_drivers_available_current Current available drivers (IDLE & fresh location)',
       '# TYPE app_drivers_available_current gauge',
       `app_drivers_available_current{app="${APP_NAME}"} ${getCurrentDriversAvailable()}`,
+      '# HELP app_login_failures_total Total login failures',
+      '# TYPE app_login_failures_total gauge',
+      `app_login_failures_total{app=\"${APP_NAME}\"} ${c.login_failures ?? 0}`,
+      '# HELP app_login_locked_total Total login locks triggered',
+      '# TYPE app_login_locked_total gauge',
+      `app_login_locked_total{app=\"${APP_NAME}\"} ${c.login_locked ?? 0}`,
+      '# HELP app_session_revokes_total Total session revocations',
+      '# TYPE app_session_revokes_total gauge',
+      `app_session_revokes_total{app=\"${APP_NAME}\"} ${c.session_revokes_total ?? 0}`,
+      '# HELP app_admin_trips_queries_total Total /admin/trips queries',
+      '# TYPE app_admin_trips_queries_total gauge',
+      `app_admin_trips_queries_total{app=\"${APP_NAME}\"} ${c.admin_trips_queries_total ?? 0}`,
+      '# HELP app_admin_trips_csv_exports_total Total /admin/trips CSV exports',
+      '# TYPE app_admin_trips_csv_exports_total gauge',
+      `app_admin_trips_csv_exports_total{app=\"${APP_NAME}\"} ${c.admin_trips_csv_exports_total ?? 0}`,
+      '# HELP app_admin_trips_report_queries_total Total /admin/trips/report queries',
+      '# TYPE app_admin_trips_report_queries_total gauge',
+      `app_admin_trips_report_queries_total{app=\"${APP_NAME}\"} ${c.admin_trips_report_queries_total ?? 0}`,
+      '# HELP app_admin_trips_report_csv_exports_total Total /admin/trips/report CSV exports',
+      '# TYPE app_admin_trips_report_csv_exports_total gauge',
+      `app_admin_trips_report_csv_exports_total{app=\"${APP_NAME}\"} ${c.admin_trips_report_csv_exports_total ?? 0}`,
     ]
     return lines.join('\n') + '\n'
   }
@@ -79,6 +107,13 @@ export async function getMetricsText(): Promise<string> {
     gauges.sse_connections.labels(APP_NAME).set(c.sse_connections ?? 0)
     gauges.sse_connections_current.labels(APP_NAME).set(getCurrentSse())
     gauges.drivers_available_current.labels(APP_NAME).set(getCurrentDriversAvailable())
+    gauges.login_failures.labels(APP_NAME).set(c.login_failures ?? 0)
+    gauges.login_locked.labels(APP_NAME).set(c.login_locked ?? 0)
+    gauges.session_revokes_total.labels(APP_NAME).set(c.session_revokes_total ?? 0)
+    gauges.admin_trips_queries_total.labels(APP_NAME).set(c.admin_trips_queries_total ?? 0)
+    gauges.admin_trips_csv_exports_total.labels(APP_NAME).set(c.admin_trips_csv_exports_total ?? 0)
+    gauges.admin_trips_report_queries_total.labels(APP_NAME).set(c.admin_trips_report_queries_total ?? 0)
+    gauges.admin_trips_report_csv_exports_total.labels(APP_NAME).set(c.admin_trips_report_csv_exports_total ?? 0)
   }
   try {
     return await reg.metrics()

@@ -1,6 +1,7 @@
 // src/plugins/jwt.ts
 import fp from 'fastify-plugin'
 import jwt from '@fastify/jwt'
+import { ensureBootstrapFromEnv, findByKid } from '../services/jwks.service'
 
 import { env } from '../config/env'
 
@@ -23,10 +24,15 @@ declare module 'fastify' {
 }
 
 export default fp(async (app) => {
-  const secret = env.jwtSecret || process.env.JWT_SECRET || 'dev-secret'
+  await ensureBootstrapFromEnv()
 
   await app.register(jwt, {
-    secret,
+    // Provide dynamic secret based on token header.kid
+    secret: async (request: any, token: any) => {
+      const kid = token?.header?.kid as string | undefined
+      const key = findByKid(kid)
+      return key?.secret || (env.jwtSecret || process.env.JWT_SECRET || 'dev-secret')
+    },
     sign: { expiresIn: process.env.JWT_EXPIRES_IN || '7d' },
   })
 

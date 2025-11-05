@@ -8,9 +8,9 @@ import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:dio/dio.dart';
 
-import 'package:openapi/src/model/driver_update_status200_response.dart';
-import 'package:openapi/src/model/driver_update_status401_response.dart';
-import 'package:openapi/src/model/users_register_push_token_request.dart';
+import 'package:taxi_openapi/src/model/driver_update_status200_response.dart';
+import 'package:taxi_openapi/src/model/driver_update_status401_response.dart';
+import 'package:taxi_openapi/src/model/users_register_push_token_request.dart';
 
 class UsersApi {
 

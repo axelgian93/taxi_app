@@ -1,8 +1,8 @@
-# openapi.model.UsersRegisterPushTokenRequest
+# taxi_openapi.model.UsersRegisterPushTokenRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

@@ -4,6 +4,10 @@ All URIs are relative to *http://localhost:8080*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
+|[**adminPaymentsReport**](#adminpaymentsreport) | **GET** /admin/payments/report | Reporte de pagos (ADMIN)|
+|[**adminPaymentsSummaryStatus**](#adminpaymentssummarystatus) | **GET** /admin/payments/summary-status | Resumen por estado de pago (ADMIN)|
+|[**adminPaymentsTopDrivers**](#adminpaymentstopdrivers) | **GET** /admin/payments/top-drivers | Top drivers por ingresos (ADMIN)|
+|[**adminPaymentsTopRiders**](#adminpaymentstopriders) | **GET** /admin/payments/top-riders | Top riders por gasto (ADMIN)|
 |[**adminRefundsList**](#adminrefundslist) | **GET** /admin/refunds | Listar refunds (ADMIN)|
 |[**paymentsCaptureByTrip**](#paymentscapturebytrip) | **POST** /payments/{tripId}/capture | Capturar pago autorizado (ADMIN)|
 |[**paymentsCreateSetupIntent**](#paymentscreatesetupintent) | **POST** /payments/setup-intent | Crear SetupIntent|
@@ -15,10 +19,259 @@ All URIs are relative to *http://localhost:8080*
 |[**paymentsSetDefaultMethod**](#paymentssetdefaultmethod) | **POST** /payments/set-default | Definir PM por defecto|
 |[**webhooksStripe**](#webhooksstripe) | **POST** /webhooks/stripe | Stripe webhook|
 
+# **adminPaymentsReport**
+> AdminPaymentsReport200Response adminPaymentsReport()
+
+Agregados de pagos por fecha/ciudad/estado/m�todo. Si format=csv, devuelve text/csv.
+
+### Example
+
+```typescript
+import {
+    PaymentsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new PaymentsApi(configuration);
+
+let city: string; // (optional) (default to undefined)
+let from: string; // (optional) (default to undefined)
+let to: string; // (optional) (default to undefined)
+let groupBy: 'day' | 'city' | 'status' | 'city_day' | 'method'; // (optional) (default to 'day')
+let format: 'json' | 'csv'; // (optional) (default to 'json')
+
+const { status, data } = await apiInstance.adminPaymentsReport(
+    city,
+    from,
+    to,
+    groupBy,
+    format
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **city** | [**string**] |  | (optional) defaults to undefined|
+| **from** | [**string**] |  | (optional) defaults to undefined|
+| **to** | [**string**] |  | (optional) defaults to undefined|
+| **groupBy** | [**&#39;day&#39; | &#39;city&#39; | &#39;status&#39; | &#39;city_day&#39; | &#39;method&#39;**]**Array<&#39;day&#39; &#124; &#39;city&#39; &#124; &#39;status&#39; &#124; &#39;city_day&#39; &#124; &#39;method&#39;>** |  | (optional) defaults to 'day'|
+| **format** | [**&#39;json&#39; | &#39;csv&#39;**]**Array<&#39;json&#39; &#124; &#39;csv&#39;>** |  | (optional) defaults to 'json'|
+
+
+### Return type
+
+**AdminPaymentsReport200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json, text/csv
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminPaymentsSummaryStatus**
+> AdminPaymentsSummaryStatus200Response adminPaymentsSummaryStatus()
+
+Conteo e importe por estado (PENDING/AUTHORIZED/PAID/FAILED/REFUNDED). CSV disponible.
+
+### Example
+
+```typescript
+import {
+    PaymentsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new PaymentsApi(configuration);
+
+let city: string; // (optional) (default to undefined)
+let from: string; // (optional) (default to undefined)
+let to: string; // (optional) (default to undefined)
+let format: 'json' | 'csv'; // (optional) (default to 'json')
+
+const { status, data } = await apiInstance.adminPaymentsSummaryStatus(
+    city,
+    from,
+    to,
+    format
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **city** | [**string**] |  | (optional) defaults to undefined|
+| **from** | [**string**] |  | (optional) defaults to undefined|
+| **to** | [**string**] |  | (optional) defaults to undefined|
+| **format** | [**&#39;json&#39; | &#39;csv&#39;**]**Array<&#39;json&#39; &#124; &#39;csv&#39;>** |  | (optional) defaults to 'json'|
+
+
+### Return type
+
+**AdminPaymentsSummaryStatus200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminPaymentsTopDrivers**
+> AdminPaymentsTopDrivers200Response adminPaymentsTopDrivers()
+
+Ingresos por driver con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+
+### Example
+
+```typescript
+import {
+    PaymentsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new PaymentsApi(configuration);
+
+let city: string; // (optional) (default to undefined)
+let from: string; // (optional) (default to undefined)
+let to: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to 20)
+let format: 'json' | 'csv'; // (optional) (default to 'json')
+
+const { status, data } = await apiInstance.adminPaymentsTopDrivers(
+    city,
+    from,
+    to,
+    limit,
+    format
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **city** | [**string**] |  | (optional) defaults to undefined|
+| **from** | [**string**] |  | (optional) defaults to undefined|
+| **to** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to 20|
+| **format** | [**&#39;json&#39; | &#39;csv&#39;**]**Array<&#39;json&#39; &#124; &#39;csv&#39;>** |  | (optional) defaults to 'json'|
+
+
+### Return type
+
+**AdminPaymentsTopDrivers200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **adminPaymentsTopRiders**
+> AdminPaymentsTopRiders200Response adminPaymentsTopRiders()
+
+Gasto por rider con pagos PAID. Filtra por fecha/ciudad. CSV disponible.
+
+### Example
+
+```typescript
+import {
+    PaymentsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new PaymentsApi(configuration);
+
+let city: string; // (optional) (default to undefined)
+let from: string; // (optional) (default to undefined)
+let to: string; // (optional) (default to undefined)
+let limit: number; // (optional) (default to 20)
+let format: 'json' | 'csv'; // (optional) (default to 'json')
+
+const { status, data } = await apiInstance.adminPaymentsTopRiders(
+    city,
+    from,
+    to,
+    limit,
+    format
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **city** | [**string**] |  | (optional) defaults to undefined|
+| **from** | [**string**] |  | (optional) defaults to undefined|
+| **to** | [**string**] |  | (optional) defaults to undefined|
+| **limit** | [**number**] |  | (optional) defaults to 20|
+| **format** | [**&#39;json&#39; | &#39;csv&#39;**]**Array<&#39;json&#39; &#124; &#39;csv&#39;>** |  | (optional) defaults to 'json'|
+
+
+### Return type
+
+**AdminPaymentsTopRiders200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **adminRefundsList**
 > AdminRefundsList200Response adminRefundsList()
 
-Lista auditorias de reembolso/cancelaciÃ³n con filtros y CSV. Si format=csv, devuelve text/csv.
+Lista auditorias de reembolso/cancelación con filtros y CSV. Si format=csv, devuelve text/csv.
 
 ### Example
 
@@ -186,7 +439,7 @@ This endpoint does not have any parameters.
 # **paymentsGetByTrip**
 > PaymentsList200ResponseItemsInner paymentsGetByTrip()
 
-Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+Devuelve el registro de Payment asociado a un Trip. Requiere JWT y ser due�o del viaje o ADMIN.
 
 ### Example
 
@@ -420,7 +673,7 @@ const { status, data } = await apiInstance.paymentsRefundByTrip(
 # **paymentsRefundsByTrip**
 > PaymentsRefundsByTrip200Response paymentsRefundsByTrip()
 
-Lista auditorias de reembolso/cancelaciÃ³n del pago de un trip. Requiere JWT y ser dueÃ±o del viaje o ADMIN.
+Lista auditorias de reembolso/cancelación del pago de un trip. Requiere JWT y ser due�o del viaje o ADMIN.
 
 ### Example
 
@@ -471,7 +724,7 @@ const { status, data } = await apiInstance.paymentsRefundsByTrip(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **paymentsSetDefaultMethod**
-> DriverUpdateStatus200Response paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest)
+> AuthLogout200Response paymentsSetDefaultMethod(paymentsSetDefaultMethodRequest)
 
 Guarda el paymentMethod como predeterminado en Stripe y DB.
 
@@ -503,7 +756,7 @@ const { status, data } = await apiInstance.paymentsSetDefaultMethod(
 
 ### Return type
 
-**DriverUpdateStatus200Response**
+**AuthLogout200Response**
 
 ### Authorization
 

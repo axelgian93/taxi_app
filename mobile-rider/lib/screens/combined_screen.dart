@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:openapi/openapi.dart';
+import 'dart:async';
 import '../api_client.dart';
 import 'request_screen.dart';
 import 'driver_screen.dart';
@@ -14,16 +14,69 @@ class CombinedScreen extends StatefulWidget {
 
 class _CombinedScreenState extends State<CombinedScreen> {
   String? _riderToken;
+  String? _riderRefresh;
   String? _driverToken;
+  String? _driverRefresh;
   int _index = 0; // 0: Rider, 1: Driver
   String? _error;
   bool _busy = true;
+  bool? _apiOk;
+  Timer? _apiTimer;
+  bool _apiChecking = false;
   final ValueNotifier<bool> _driverVisible = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
+    // Redirect back to login if auth expires during use
+    ApiClient().setAuthExpiredHandler(() {
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    });
+    _checkApi();
     _bootstrap();
+    _startApiAutoCheck();
+  }
+
+  Future<void> _checkApi() async {
+    if (_apiChecking) return;
+    _apiChecking = true;
+    final api = ApiClient();
+    final prev = _apiOk;
+    if (mounted) setState(() { _apiOk = null; });
+    try {
+      final ok = await api.ping(baseUrl: widget.baseUrl);
+      if (!mounted) return;
+      setState(() { _apiOk = ok; });
+      if (prev != null && prev != ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? 'API recovered' : 'API down'),
+            backgroundColor: ok ? Colors.green : Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _apiOk = false; });
+      if (prev != null && prev != false) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('API down'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      _apiChecking = false;
+    }
+  }
+
+  void _startApiAutoCheck() {
+    _apiTimer?.cancel();
+    _apiTimer = Timer.periodic(const Duration(seconds: 30), (_) => _checkApi());
   }
 
   Future<void> _bootstrap() async {
@@ -32,27 +85,19 @@ class _CombinedScreenState extends State<CombinedScreen> {
     try {
       // Login rider
       api.configure(baseUrl: widget.baseUrl);
-      final lr = await api.auth.authLogin(
-        authLoginRequest: AuthLoginRequest((AuthLoginRequestBuilder b) {
-          b.email = 'rider@taxi.local';
-          b.password = '123456';
-        }),
-      );
-      _riderToken = lr.data?.token ?? '';
+      final lr = await api.loginRaw('rider@taxi.local', '123456');
+      _riderToken = lr?['token'] ?? '';
+      _riderRefresh = lr?['refreshToken'] ?? '';
       if ((_riderToken ?? '').isEmpty) throw Exception('Empty rider token');
 
       // Login driver
-      final ld = await api.auth.authLogin(
-        authLoginRequest: AuthLoginRequest((AuthLoginRequestBuilder b) {
-          b.email = 'driver@taxi.local';
-          b.password = '123456';
-        }),
-      );
-      _driverToken = ld.data?.token ?? '';
+      final ld = await api.loginRaw('driver@taxi.local', '123456');
+      _driverToken = ld?['token'] ?? '';
+      _driverRefresh = ld?['refreshToken'] ?? '';
       if ((_driverToken ?? '').isEmpty) throw Exception('Empty driver token');
 
       // Start with rider context
-      api.configure(baseUrl: widget.baseUrl, token: _riderToken);
+      api.configure(baseUrl: widget.baseUrl, token: _riderToken, refreshToken: _riderRefresh);
     } catch (e) {
       setState(() { _error = 'Bootstrap failed: $e'; });
     } finally {
@@ -65,10 +110,10 @@ class _CombinedScreenState extends State<CombinedScreen> {
     setState(() { _index = i; });
     final api = ApiClient();
     if (i == 0) {
-      api.configure(baseUrl: widget.baseUrl, token: _riderToken);
+      api.configure(baseUrl: widget.baseUrl, token: _riderToken, refreshToken: _riderRefresh);
       _driverVisible.value = false;
     } else {
-      api.configure(baseUrl: widget.baseUrl, token: _driverToken);
+      api.configure(baseUrl: widget.baseUrl, token: _driverToken, refreshToken: _driverRefresh);
       _driverVisible.value = true;
     }
   }
@@ -76,7 +121,50 @@ class _CombinedScreenState extends State<CombinedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Rider + Driver Demo')),
+      appBar: AppBar(
+        title: const Text('Rider + Driver Demo'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Tooltip(
+              message: _apiOk == null ? 'API: checking' : _apiOk == true ? 'API: OK' : 'API: DOWN',
+              child: Icon(
+                Icons.circle,
+                size: 14,
+                color: _apiOk == null ? Colors.grey : _apiOk == true ? Colors.green : Colors.red,
+              ),
+            ),
+          ),
+          IconButton(onPressed: _checkApi, icon: const Icon(Icons.refresh)),
+          IconButton(
+            tooltip: 'Historial',
+            onPressed: () {
+              Navigator.of(context).pushNamed('/history');
+            },
+            icon: const Icon(Icons.history),
+          ),
+          IconButton(
+            tooltip: 'Sesiones',
+            onPressed: () {
+              Navigator.of(context).pushNamed('/sessions');
+            },
+            icon: const Icon(Icons.devices),
+          ),
+          IconButton(
+            tooltip: 'Clear Session',
+            onPressed: () async {
+              final api = ApiClient();
+              await api.clearSession();
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Sesión limpiada')),
+              );
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+            },
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _index,
         onTap: _onTap,
@@ -97,5 +185,11 @@ class _CombinedScreenState extends State<CombinedScreen> {
                   ],
                 ),
     );
+  }
+
+  @override
+  void dispose() {
+    _apiTimer?.cancel();
+    super.dispose();
   }
 }

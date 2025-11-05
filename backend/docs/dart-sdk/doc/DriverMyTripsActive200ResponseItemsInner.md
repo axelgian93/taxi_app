@@ -1,8 +1,8 @@
-# openapi.model.DriverMyTripsActive200ResponseItemsInner
+# taxi_openapi.model.DriverMyTripsActive200ResponseItemsInner
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:openapi/openapi.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:taxi_openapi/taxi_openapi.dart';
 import '../api_client.dart';
 import '../sse_service.dart';
 
@@ -24,7 +27,9 @@ class _RequestScreenState extends State<RequestScreen> {
   String _status = '-';
   bool _busy = false;
   String? _error;
-  SseSubscription? _sse;
+  dynamic _sse; // subscription handle
+  LatLng? _driverPos;
+  DateTime? _lastLocAt;
 
   @override
   void dispose() {
@@ -33,10 +38,15 @@ class _RequestScreenState extends State<RequestScreen> {
   }
 
   Future<void> _request() async {
-    setState(() { _busy = true; _error = null; _tripId = null; _status = '-'; });
+    setState(() {
+      _busy = true;
+      _error = null;
+      _tripId = null;
+      _status = '-';
+    });
     try {
       final api = ApiClient();
-      final req = TripsRequestRequest((TripsRequestRequestBuilder b) {
+      final req = TripsRequestRequest((b) {
         b.city = _cityCtrl.text.trim();
         b.pickupLat = double.parse(_pickupLat.text);
         b.pickupLng = double.parse(_pickupLng.text);
@@ -48,12 +58,29 @@ class _RequestScreenState extends State<RequestScreen> {
       final resp = await api.trips.tripsRequest(tripsRequestRequest: req);
       final id = resp.data?.trip?.id;
       if (id == null || id.isEmpty) throw Exception('Empty tripId');
-      setState(() { _tripId = id; _status = (resp.data?.trip?.status?.toString() ?? 'REQUESTED'); });
-      _startSse();
+      setState(() {
+        _tripId = id;
+        _status = (resp.data?.trip?.status?.toString() ?? 'REQUESTED');
+      });
+      // Save to recent trips
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final list = prefs.getStringList('recent_trips') ?? <String>[];
+        if (!list.contains(id)) {
+          list.insert(0, id);
+          while (list.length > 10) { list.removeLast(); }
+          await prefs.setStringList('recent_trips', list);
+        }
+      } catch (_) {}
+      await _startSse();
     } catch (e) {
-      setState(() { _error = 'Request failed: $e'; });
+      setState(() {
+        _error = 'Request failed: $e';
+      });
     } finally {
-      setState(() { _busy = false; });
+      setState(() {
+        _busy = false;
+      });
     }
   }
 
@@ -61,33 +88,72 @@ class _RequestScreenState extends State<RequestScreen> {
     if (_tripId == null) return;
     try {
       final api = ApiClient();
-      await api.trips.tripsCancel(id: _tripId!, tripsCancelRequest: TripsCancelRequest((TripsCancelRequestBuilder b) { b.reason = 'USER_REQUEST'; }));
+      await api.trips.tripsCancel(
+        id: _tripId!,
+        tripsCancelRequest: TripsCancelRequest((b) => b.reason = 'USER_REQUEST'),
+      );
     } catch (e) {
-      setState(() { _error = 'Cancel failed: $e'; });
+      setState(() {
+        _error = 'Cancel failed: $e';
+      });
     }
   }
 
   Future<void> _startSse() async {
-    final id = _tripId; if (id == null) return;
+    final id = _tripId;
+    if (id == null) return;
     _sse?.cancel();
     final api = ApiClient();
-    _sse = await listenTripSse(
+    _sse = await listenTripSseAutoReconnect(
       baseUrl: api.baseUrl,
       token: api.token ?? '',
       tripId: id,
       onEvent: (ev) {
+        final t = (ev['type'] ?? '') as String?;
+        if (t == 'LOCATION') {
+          final data = ev['data'] as Map<String, dynamic>?;
+          final lat = data?['lat'];
+          final lng = data?['lng'];
+          if (lat is num && lng is num) {
+            final now = DateTime.now();
+            final last = _lastLocAt;
+            if (last == null || now.difference(last).inMilliseconds >= 1000) {
+              setState(() {
+                _driverPos = LatLng(lat.toDouble(), lng.toDouble());
+                _lastLocAt = now;
+              });
+            }
+          }
+          return;
+        }
         final s = (ev['status'] ?? ev['type'] ?? '') as String?;
         if (s != null && s.isNotEmpty) {
-          setState(() { _status = s; });
+          setState(() => _status = s);
         }
       },
+      onStatus: (_) {},
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Taxi Rider - Request')),
+      appBar: AppBar(
+        title: const Text('Taxi Rider - Request'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              await prefs.remove('auth_token');
+              await prefs.remove('refresh_token');
+              if (!mounted) return;
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+            },
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -106,16 +172,16 @@ class _RequestScreenState extends State<RequestScreen> {
               Expanded(child: TextField(controller: _dropLng, decoration: const InputDecoration(labelText: 'Dropoff Lng'))),
             ]),
             const SizedBox(height: 8),
-            Row(children:[
+            Row(children: [
               const Text('Preferred payment:'),
               const SizedBox(width: 8),
               DropdownButton<String>(
                 value: _riderMethod,
-                items: const [
-                  DropdownMenuItem(value: 'CASH', child: Text('CASH')),
-                ],
-                onChanged: (v){ if (v!=null) setState((){ _riderMethod = 'CASH'; }); },
-              )
+                items: const [DropdownMenuItem(value: 'CASH', child: Text('CASH'))],
+                onChanged: (v) {
+                  if (v != null) setState(() => _riderMethod = v);
+                },
+              ),
             ]),
             const SizedBox(height: 8),
             Row(children: [
@@ -129,11 +195,65 @@ class _RequestScreenState extends State<RequestScreen> {
             Row(children: [
               ElevatedButton(onPressed: _busy ? null : _request, child: const Text('Request Trip')),
               const SizedBox(width: 12),
-              ElevatedButton(onPressed: _tripId==null ? null : _cancel, child: const Text('Cancel Trip')),
+              ElevatedButton(onPressed: _tripId == null ? null : _cancel, child: const Text('Cancel Trip')),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: _tripId == null ? null : () {
+                  if (_tripId == null) return;
+                  Navigator.of(context).pushNamed('/receipt', arguments: _tripId);
+                },
+                child: const Text('View Receipt'),
+              ),
             ]),
             const SizedBox(height: 24),
             Text('Trip ID: ${_tripId ?? '-'}'),
             Text('Status: $_status'),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 240,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(
+                    double.tryParse(_pickupLat.text) ?? 0,
+                    double.tryParse(_pickupLng.text) ?? 0,
+                  ),
+                  initialZoom: 13,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: const ['a', 'b', 'c'],
+                  ),
+                  MarkerLayer(markers: [
+                    Marker(
+                      point: LatLng(
+                        double.tryParse(_pickupLat.text) ?? 0,
+                        double.tryParse(_pickupLng.text) ?? 0,
+                      ),
+                      width: 24,
+                      height: 24,
+                      child: const Icon(Icons.flag, color: Colors.green),
+                    ),
+                    Marker(
+                      point: LatLng(
+                        double.tryParse(_dropLat.text) ?? 0,
+                        double.tryParse(_dropLng.text) ?? 0,
+                      ),
+                      width: 24,
+                      height: 24,
+                      child: const Icon(Icons.flag, color: Colors.red),
+                    ),
+                    if (_driverPos != null)
+                      Marker(
+                        point: _driverPos!,
+                        width: 28,
+                        height: 28,
+                        child: const Icon(Icons.local_taxi, color: Colors.orange),
+                      ),
+                  ]),
+                ],
+              ),
+            ),
           ],
         ),
       ),

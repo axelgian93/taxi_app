@@ -1,8 +1,8 @@
-# openapi.model.TripsCancelRequest
+# taxi_openapi.model.TripsCancelRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

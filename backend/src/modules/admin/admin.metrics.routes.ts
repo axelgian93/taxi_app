@@ -37,3 +37,5 @@ export default async function adminMetricsRoutes(app: FastifyInstance) {
   )
 }
 
+
+

@@ -1,8 +1,8 @@
-# openapi.api.AdminApi
+# taxi_openapi.api.AdminApi
 
 ## Load the API package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 All URIs are relative to *http://localhost:8080*
@@ -10,6 +10,7 @@ All URIs are relative to *http://localhost:8080*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**adminDiagnosticsMatching**](AdminApi.md#admindiagnosticsmatching) | **GET** /admin/diagnostics/matching | Diagnostics matching
+[**adminDiagnosticsMatchingTest**](AdminApi.md#admindiagnosticsmatchingtest) | **POST** /admin/diagnostics/matching/test | Probar matching (PostGIS/Haversine/Idle)
 [**adminMetrics**](AdminApi.md#adminmetrics) | **GET** /admin/metrics | Prometheus metrics
 [**adminTariffsCreate**](AdminApi.md#admintariffscreate) | **POST** /admin/tariffs | Crear TariffRule
 [**adminTariffsList**](AdminApi.md#admintariffslist) | **GET** /admin/tariffs | Listar TariffRule
@@ -27,9 +28,9 @@ Estado de PostGIS y parÃ¡metros de matching (env) + contadores de uso.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 
 try {
     final response = api.adminDiagnosticsMatching();
@@ -57,6 +58,49 @@ This endpoint does not need any parameter.
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **adminDiagnosticsMatchingTest**
+> AdminDiagnosticsMatchingTest200Response adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest)
+
+Probar matching (PostGIS/Haversine/Idle)
+
+Intenta encontrar el driver más cercano usando PostGIS si está disponible; de lo contrario cae a Haversine y finalmente idle fallback. Incrementa contadores de métricas según el camino usado.
+
+### Example
+```dart
+import 'package:taxi_openapi/api.dart';
+
+final api = TaxiOpenapi().getAdminApi();
+final AdminDiagnosticsMatchingTestRequest adminDiagnosticsMatchingTestRequest = ; // AdminDiagnosticsMatchingTestRequest | 
+
+try {
+    final response = api.adminDiagnosticsMatchingTest(adminDiagnosticsMatchingTestRequest);
+    print(response);
+} catch on DioException (e) {
+    print('Exception when calling AdminApi->adminDiagnosticsMatchingTest: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **adminDiagnosticsMatchingTestRequest** | [**AdminDiagnosticsMatchingTestRequest**](AdminDiagnosticsMatchingTestRequest.md)|  | 
+
+### Return type
+
+[**AdminDiagnosticsMatchingTest200Response**](AdminDiagnosticsMatchingTest200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **adminMetrics**
 > adminMetrics()
 
@@ -66,9 +110,9 @@ ExposiciÃ³n de mÃ©tricas en formato Prometheus. Protegido por rol ADMIN.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 
 try {
     api.adminMetrics();
@@ -104,9 +148,9 @@ Crea una regla y opcionalmente desactiva reglas activas previas de la misma ciud
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 final AdminTariffsCreateRequest adminTariffsCreateRequest = ; // AdminTariffsCreateRequest | 
 
 try {
@@ -147,9 +191,9 @@ Lista reglas por ciudad.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 final String city = city_example; // String | 
 final bool active = true; // bool | 
 
@@ -192,9 +236,9 @@ Actualiza campos de una regla por id.
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 final String id = id_example; // String | 
 final AdminTariffsUpdateByIdRequest adminTariffsUpdateByIdRequest = ; // AdminTariffsUpdateByIdRequest | 
 
@@ -235,9 +279,9 @@ Name | Type | Description  | Notes
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 final int limit = 56; // int | 
 final String cursor = cursor_example; // String | 
 
@@ -280,9 +324,9 @@ Endpoint para scraping por Prometheus. Requiere header x-metrics-token si METRIC
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getAdminApi();
+final api = TaxiOpenapi().getAdminApi();
 
 try {
     api.metricsPublic();

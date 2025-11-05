@@ -1,8 +1,8 @@
-# openapi.model.PaymentsCreateSetupIntent200Response
+# taxi_openapi.model.PaymentsCreateSetupIntent200Response
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

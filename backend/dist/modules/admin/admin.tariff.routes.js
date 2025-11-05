@@ -87,6 +87,12 @@ async function adminTariffRoutes(app) {
                 notes: b.notes ?? null,
             }
         });
+        // Audit
+        try {
+            const adminUserId = req.user?.id;
+            await prisma_1.default.$executeRawUnsafe('INSERT INTO "TariffAudit" ("adminUserId", action, "tariffRuleId", before, after) VALUES ($1,$2,$3,$4,$5)', adminUserId || null, 'CREATE', rule.id, null, JSON.stringify(rule));
+        }
+        catch { }
         return reply.send(rule);
     });
     // PATCH /admin/tariffs/:id - update fields
@@ -113,6 +119,12 @@ async function adminTariffRoutes(app) {
                 cancellationFeeArrivedUsd: (b.cancellationFeeArrivedUsd ?? found.cancellationFeeArrivedUsd),
                 notes: b.notes ?? found.notes,
             } });
+        // Audit
+        try {
+            const adminUserId = req.user?.id;
+            await prisma_1.default.$executeRawUnsafe('INSERT INTO "TariffAudit" ("adminUserId", action, "tariffRuleId", before, after) VALUES ($1,$2,$3,$4,$5)', adminUserId || null, 'UPDATE', id, JSON.stringify(found), JSON.stringify(rule));
+        }
+        catch { }
         return reply.send(rule);
     });
 }

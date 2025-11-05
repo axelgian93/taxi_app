@@ -1,8 +1,8 @@
-# openapi.model.PaymentsSetDefaultMethodRequest
+# taxi_openapi.model.PaymentsSetDefaultMethodRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

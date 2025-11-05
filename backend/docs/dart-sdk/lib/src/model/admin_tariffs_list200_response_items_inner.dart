@@ -190,21 +190,21 @@ class _$AdminTariffsList200ResponseItemsInnerSerializer implements PrimitiveSeri
       yield r'nightStartHour';
       yield serializers.serialize(
         object.nightStartHour,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.nightEndHour != null) {
       yield r'nightEndHour';
       yield serializers.serialize(
         object.nightEndHour,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.cancellationGraceSec != null) {
       yield r'cancellationGraceSec';
       yield serializers.serialize(
         object.cancellationGraceSec,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.cancellationFeeAcceptedUsd != null) {
@@ -225,21 +225,21 @@ class _$AdminTariffsList200ResponseItemsInnerSerializer implements PrimitiveSeri
       yield r'validFrom';
       yield serializers.serialize(
         object.validFrom,
-        specifiedType: const FullType(DateTime),
+        specifiedType: const FullType.nullable(DateTime),
       );
     }
     if (object.validTo != null) {
       yield r'validTo';
       yield serializers.serialize(
         object.validTo,
-        specifiedType: const FullType(DateTime),
+        specifiedType: const FullType.nullable(DateTime),
       );
     }
     if (object.notes != null) {
       yield r'notes';
       yield serializers.serialize(
         object.notes,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.createdAt != null) {
@@ -352,22 +352,25 @@ class _$AdminTariffsList200ResponseItemsInnerSerializer implements PrimitiveSeri
         case r'nightStartHour':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.nightStartHour = valueDes;
           break;
         case r'nightEndHour':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.nightEndHour = valueDes;
           break;
         case r'cancellationGraceSec':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.cancellationGraceSec = valueDes;
           break;
         case r'cancellationFeeAcceptedUsd':
@@ -387,22 +390,25 @@ class _$AdminTariffsList200ResponseItemsInnerSerializer implements PrimitiveSeri
         case r'validFrom':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(DateTime),
-          ) as DateTime;
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
           result.validFrom = valueDes;
           break;
         case r'validTo':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(DateTime),
-          ) as DateTime;
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
           result.validTo = valueDes;
           break;
         case r'notes':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.notes = valueDes;
           break;
         case r'createdAt':

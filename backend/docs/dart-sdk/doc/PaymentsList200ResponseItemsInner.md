@@ -1,8 +1,8 @@
-# openapi.model.PaymentsList200ResponseItemsInner
+# taxi_openapi.model.PaymentsList200ResponseItemsInner
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

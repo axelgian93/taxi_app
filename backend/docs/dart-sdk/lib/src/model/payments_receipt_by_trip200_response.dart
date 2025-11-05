@@ -109,7 +109,7 @@ class _$PaymentsReceiptByTrip200ResponseSerializer implements PrimitiveSerialize
       yield r'provider';
       yield serializers.serialize(
         object.provider,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.type != null) {
@@ -123,7 +123,7 @@ class _$PaymentsReceiptByTrip200ResponseSerializer implements PrimitiveSerialize
       yield r'paidAt';
       yield serializers.serialize(
         object.paidAt,
-        specifiedType: const FullType(DateTime),
+        specifiedType: const FullType.nullable(DateTime),
       );
     }
   }
@@ -187,8 +187,9 @@ class _$PaymentsReceiptByTrip200ResponseSerializer implements PrimitiveSerialize
         case r'provider':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.provider = valueDes;
           break;
         case r'type':
@@ -201,8 +202,9 @@ class _$PaymentsReceiptByTrip200ResponseSerializer implements PrimitiveSerialize
         case r'paidAt':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(DateTime),
-          ) as DateTime;
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
           result.paidAt = valueDes;
           break;
         default:

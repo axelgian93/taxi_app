@@ -124,7 +124,7 @@ class _$DriverMyTripsActive200ResponseItemsInnerSerializer implements PrimitiveS
       yield r'preferredMethod';
       yield serializers.serialize(
         object.preferredMethod,
-        specifiedType: const FullType(DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum),
+        specifiedType: const FullType.nullable(DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum),
       );
     }
   }
@@ -202,8 +202,9 @@ class _$DriverMyTripsActive200ResponseItemsInnerSerializer implements PrimitiveS
         case r'preferredMethod':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum),
-          ) as DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum;
+            specifiedType: const FullType.nullable(DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum),
+          ) as DriverMyTripsActive200ResponseItemsInnerPreferredMethodEnum?;
+          if (valueDes == null) continue;
           result.preferredMethod = valueDes;
           break;
         default:

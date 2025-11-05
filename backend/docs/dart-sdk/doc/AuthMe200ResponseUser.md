@@ -1,8 +1,8 @@
-# openapi.model.AuthMe200ResponseUser
+# taxi_openapi.model.AuthMe200ResponseUser
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

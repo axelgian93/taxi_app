@@ -1,8 +1,8 @@
-# openapi.model.PaymentsCaptureByTrip404Response
+# taxi_openapi.model.PaymentsCaptureByTrip404Response
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

@@ -86,6 +86,13 @@ async function tripRoutes(app) {
     // POST /trips/request â€” Rider creates a trip and assigns nearest driver
     app.post('/trips/request', {
         preHandler: [app.auth.verifyJWT],
+        config: {
+            rateLimit: {
+                max: Number(process.env.RL_TRIP_REQUEST_MAX || 10),
+                timeWindow: process.env.RL_TRIP_REQUEST_WIN || '1 minute',
+                keyGenerator: (req) => `tripreq:${req.user?.id || req.ip}`,
+            }
+        },
         schema: {
             operationId: 'tripsRequest',
             summary: 'Solicitar viaje',
@@ -130,7 +137,7 @@ async function tripRoutes(app) {
         if (bestUserId) {
             (0, events_service_1.publishTripEvent)(trip.id, { type: 'ASSIGNED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: bestUserId } });
             // Push notifications
-            (0, push_service_1.sendPushToUser)(trip.riderId, { title: 'Conductor asignado', body: 'Se asignÃ³ un conductor a tu viaje.' });
+            (0, push_service_1.sendPushToUser)(trip.riderId, { title: 'Conductor asignado', body: 'Se asignï¿½ un conductor a tu viaje.' });
             (0, push_service_1.sendPushToUser)(bestUserId, { title: 'Nuevo viaje asignado', body: 'Tienes un nuevo viaje por atender.' });
         }
         else {
@@ -139,7 +146,7 @@ async function tripRoutes(app) {
         return reply.send({ ok: true, trip: { id: trip.id, status: trip.status } });
     });
     // POST /trips/:id/accept â€” Driver accepts assigned trip
-    app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }, 403: trip_schemas_1.errorResponse, 404: trip_schemas_1.errorResponse } } }, async (req, reply) => {
+    app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for accept' } } } } }, async (req, reply) => {
         const p = req.params;
         const id = p?.id || '';
         if (!id)
@@ -152,15 +159,28 @@ async function tripRoutes(app) {
             return reply.code(404).send({ error: 'Trip not found' });
         if (t.driverId && t.driverId !== user.id && user.role !== 'ADMIN')
             return reply.code(403).send({ error: 'Not your trip' });
-        const up = await prisma_1.default.trip.update({ where: { id }, data: { status: 'ACCEPTED', acceptedAt: new Date(), driverId: t.driverId ?? user.id } });
-        (0, events_service_1.publishTripEvent)(id, { type: 'ACCEPTED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: up.driverId } });
+        // accept: atomic guard below ensures only one driver accepts
+        // Atomic guard to avoid double-accept by multiple drivers
+        const __resAccept = await prisma_1.default.trip.updateMany({
+            where: { id, status: 'REQUESTED', OR: [{ driverId: null }, { driverId: user.id }] },
+            data: { status: 'ACCEPTED', acceptedAt: new Date(), driverId: user.id }
+        });
+        if (__resAccept.count === 0) {
+            const __cur = await prisma_1.default.trip.findUnique({ where: { id }, select: { id: true, status: true, driverId: true } });
+            if (__cur && __cur.status === 'ACCEPTED' && __cur.driverId === user.id) {
+                return reply.send({ ok: true, trip: { id: __cur.id, status: __cur.status } });
+            }
+            return reply.code(409).send({ error: 'Invalid state for accept' });
+        }
+        const up = { id, status: 'ACCEPTED', driverId: user.id };
+        (0, events_service_1.publishTripEvent)(id, { type: 'ACCEPTED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: user.id } });
         // Notify rider
         if (up.driverId)
-            (0, push_service_1.sendPushToUser)((await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } })).riderId, { title: 'Conductor aceptÃ³', body: 'Tu conductor aceptÃ³ el viaje.' });
-        return reply.send({ ok: true, trip: { id: up.id, status: up.status } });
+            (0, push_service_1.sendPushToUser)((await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } })).riderId, { title: 'Conductor aceptï¿½', body: 'Tu conductor aceptï¿½ el viaje.' });
+        return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } });
     });
     // POST /trips/:id/arrived â€” Driver arrived at pickup
-    app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor llega al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }, 403: trip_schemas_1.errorResponse, 404: trip_schemas_1.errorResponse } } }, async (req, reply) => {
+    app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor llegï¿½ al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ARRIVED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for arrived' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         if (!id)
@@ -172,15 +192,17 @@ async function tripRoutes(app) {
             return reply.code(404).send({ error: 'Trip not found' });
         if (t.driverId && t.driverId !== user.id && user.role !== 'ADMIN')
             return reply.code(403).send({ error: 'Not your trip' });
-        const up = await prisma_1.default.trip.update({ where: { id }, data: { status: 'ARRIVED', arrivedAt: new Date(), driverId: t.driverId ?? user.id } });
+        const __resArrived = await prisma_1.default.trip.updateMany({ where: { id, status: 'ACCEPTED', OR: [{ driverId: user.id }, { driverId: null }] }, data: { status: 'ARRIVED', arrivedAt: new Date(), driverId: user.id } });
+        if (__resArrived.count === 0)
+            return reply.code(409).send({ error: 'Invalid state for arrived' });
         (0, events_service_1.publishTripEvent)(id, { type: 'ARRIVED', status: 'ARRIVED', at: new Date().toISOString() });
         const tr = await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } });
         if (tr)
-            (0, push_service_1.sendPushToUser)(tr.riderId, { title: 'Conductor llegÃ³', body: 'Tu conductor ha llegado al punto de recogida.' });
-        return reply.send({ ok: true, trip: { id: up.id, status: up.status } });
+            (0, push_service_1.sendPushToUser)(tr.riderId, { title: 'Conductor llegï¿½', body: 'Tu conductor ha llegï¿½o al punto de recogida.' });
+        return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } });
     });
     // POST /trips/:id/start â€” Start trip, optionally preauthorize CARD
-    app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe estÃ¡ configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH', 'CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }, 403: trip_schemas_1.errorResponse, 404: trip_schemas_1.errorResponse } } }, async (req, reply) => {
+    app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH', 'CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'STARTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for start' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const { method } = (req.body || {});
         const payMethod = method || 'CASH';
@@ -192,6 +214,8 @@ async function tripRoutes(app) {
         const t = await prisma_1.default.trip.findUnique({ where: { id }, include: { payment: true, rider: true } });
         if (!t)
             return reply.code(404).send({ error: 'Trip not found' });
+        if (t.status !== 'ACCEPTED' && t.status !== 'ARRIVED')
+            return reply.code(409).send({ error: 'Invalid state for start' });
         // Preauth if CARD and Stripe configured; block CARD if disabled/absent
         if (payMethod === 'CARD') {
             const stripe = (0, stripe_service_1.getStripe)();
@@ -217,15 +241,17 @@ async function tripRoutes(app) {
         else if (!t.payment && payMethod === 'CASH') {
             await prisma_1.default.payment.create({ data: { tripId: id, amountUsd: Number(t.costUsd || 0), status: 'PENDING', method: 'CASH', provider: null, externalId: null } });
         }
-        const up = await prisma_1.default.trip.update({ where: { id }, data: { status: 'STARTED', startedAt: new Date() } });
+        const __resStart = await prisma_1.default.trip.updateMany({ where: { id, status: { in: ['ACCEPTED', 'ARRIVED'] }, OR: [{ driverId: user.id }, { driverId: null }] }, data: { status: 'STARTED', startedAt: new Date(), driverId: user.id } });
+        if (__resStart.count === 0)
+            return reply.code(409).send({ error: 'Invalid state for start' });
         (0, events_service_1.publishTripEvent)(id, { type: 'STARTED', status: 'STARTED', at: new Date().toISOString() });
         const trS = await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } });
         if (trS)
             (0, push_service_1.sendPushToUser)(trS.riderId, { title: 'Viaje iniciado', body: 'Tu viaje ha comenzado.' });
-        return reply.send({ ok: true, trip: { id: up.id, status: up.status } });
+        return reply.send({ ok: true, trip: { id, status: 'STARTED' } });
     });
     // POST /trips/:id/complete â€” Complete trip and settle payment
-    app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }, 403: trip_schemas_1.errorResponse, 404: trip_schemas_1.errorResponse } } }, async (req, reply) => {
+    app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'COMPLETED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for complete' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         if (!id)
@@ -235,6 +261,8 @@ async function tripRoutes(app) {
         const t = await prisma_1.default.trip.findUnique({ where: { id }, include: { payment: true } });
         if (!t)
             return reply.code(404).send({ error: 'Trip not found' });
+        if (t.status !== 'STARTED')
+            return reply.code(409).send({ error: 'Invalid state for complete' });
         // Capture if needed
         if (t.payment && t.payment.provider === 'Stripe' && t.payment.status === 'AUTHORIZED' && t.payment.externalId) {
             const stripe = (0, stripe_service_1.getStripe)();
@@ -252,7 +280,9 @@ async function tripRoutes(app) {
         else if (t.payment && t.payment.method === 'CASH') {
             await prisma_1.default.payment.update({ where: { tripId: id }, data: { status: 'PAID' } });
         }
-        const up = await prisma_1.default.trip.update({ where: { id }, data: { status: 'COMPLETED', completedAt: new Date() } });
+        const __resComplete = await prisma_1.default.trip.updateMany({ where: { id, status: 'STARTED', OR: [{ driverId: user.id }, { driverId: null }] }, data: { status: 'COMPLETED', completedAt: new Date(), driverId: user.id } });
+        if (__resComplete.count === 0)
+            return reply.code(409).send({ error: 'Invalid state for complete' });
         (0, events_service_1.publishTripEvent)(id, { type: 'COMPLETED', status: 'COMPLETED', at: new Date().toISOString() });
         const trC = await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true, driverId: true } });
         if (trC) {
@@ -260,10 +290,10 @@ async function tripRoutes(app) {
             if (trC.driverId)
                 (0, push_service_1.sendPushToUser)(trC.driverId, { title: 'Viaje completado', body: 'Has completado un viaje.' });
         }
-        return reply.send({ ok: true, trip: { id: up.id, status: up.status } });
+        return reply.send({ ok: true, trip: { id, status: 'COMPLETED' } });
     });
     // POST /trips/:id/cancel â€” Rider cancels; may apply fee if ARRIVED or beyond grace
-    app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee segÃºn estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }, 403: trip_schemas_1.errorResponse, 404: trip_schemas_1.errorResponse } } }, async (req, reply) => {
+    app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'CANCELED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for cancel' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         const { reason } = (req.body || {});
@@ -276,6 +306,8 @@ async function tripRoutes(app) {
             return reply.code(404).send({ error: 'Trip not found' });
         if (user.role !== 'ADMIN' && t.riderId !== user.id)
             return reply.code(403).send({ error: 'Not your trip' });
+        if (t.status === 'COMPLETED' || t.status === 'CANCELED')
+            return reply.code(409).send({ error: 'Invalid state for cancel' });
         let fee = 0;
         // Determine fee by status
         const city = t.city || t.pricingSnapshot?.city || 'default';
@@ -290,7 +322,9 @@ async function tripRoutes(app) {
                 fee = Number(rule?.cancellationFeeAcceptedUsd ?? process.env.CANCELLATION_FEE_USD_ACCEPTED ?? 1);
             }
         }
-        await prisma_1.default.trip.update({ where: { id }, data: { status: 'CANCELED', canceledAt: new Date(), cancelReason: reason || null } });
+        const __resCancel = await prisma_1.default.trip.updateMany({ where: { id, status: { notIn: ['COMPLETED', 'CANCELED'] } }, data: { status: 'CANCELED', canceledAt: new Date(), cancelReason: reason || null } });
+        if (__resCancel.count === 0)
+            return reply.code(409).send({ error: 'Invalid state for cancel' });
         if (fee > 0) {
             const existing = await prisma_1.default.payment.findUnique({ where: { tripId: id } });
             if (existing) {
@@ -311,7 +345,7 @@ async function tripRoutes(app) {
         preHandler: [app.auth.verifyJWT],
         schema: {
             summary: 'Trip live updates (SSE)',
-            description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.',
+            description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).',
             tags: ['Trips'],
             produces: ['text/event-stream'],
             response: {
@@ -380,6 +414,55 @@ async function tripRoutes(app) {
             (0, events_service_1.publishTripEvent)(id, { type: 'INFO', at: new Date().toISOString(), data: { message: 'SSE connected' } });
             return reply.hijack();
         }
+    });
+    // GET /trips/:id/driver-location ï¿½ Current driver lat/lng for this trip
+    app.get('/trips/:id/driver-location', {
+        preHandler: [app.auth.verifyJWT],
+        schema: {
+            operationId: 'tripsDriverLocation',
+            tags: ['Trips'],
+            summary: 'UbicaciÃ³n actual del driver para el viaje',
+            description: 'Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.',
+            params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false },
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        tripId: { type: 'string' },
+                        driverId: { type: 'string', nullable: true },
+                        lat: { type: 'number', nullable: true },
+                        lng: { type: 'number', nullable: true },
+                        locationUpdatedAt: { type: 'string', format: 'date-time', nullable: true },
+                    },
+                    example: { tripId: 'trp_123', driverId: 'u_driver', lat: -2.17, lng: -79.92, locationUpdatedAt: '2025-01-01T12:00:00.000Z' }
+                },
+                400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid id' } },
+                403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } },
+                404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Trip not found' } },
+            }
+        },
+    }, async (req, reply) => {
+        const id = req.params.id;
+        if (!id)
+            return reply.code(400).send({ error: 'Invalid id' });
+        const user = req.user;
+        const t = await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true, driverId: true } });
+        if (!t)
+            return reply.code(404).send({ error: 'Trip not found' });
+        const isOwner = user.id === t.riderId || user.id === t.driverId;
+        const isAdmin = user.role === 'ADMIN';
+        if (!isOwner && !isAdmin)
+            return reply.code(403).send({ error: 'Forbidden' });
+        if (!t.driverId)
+            return reply.send({ tripId: id, driverId: null, lat: null, lng: null, locationUpdatedAt: null });
+        const dp = await prisma_1.default.driverProfile.findUnique({ where: { userId: t.driverId }, select: { currentLat: true, currentLng: true, locationUpdatedAt: true } });
+        return reply.send({
+            tripId: id,
+            driverId: t.driverId,
+            lat: dp?.currentLat != null ? Number(dp.currentLat) : null,
+            lng: dp?.currentLng != null ? Number(dp.currentLng) : null,
+            locationUpdatedAt: dp?.locationUpdatedAt ?? null,
+        });
     });
 }
 //# sourceMappingURL=trip.routes.js.map

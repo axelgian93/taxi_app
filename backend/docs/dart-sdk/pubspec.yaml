@@ -1,6 +1,6 @@
-name: openapi
+name: taxi_openapi
 version: 1.0.0
-description: OpenAPI API client
+description: Taxi%20API%20SDK
 homepage: homepage
 
 

@@ -107,7 +107,7 @@ class _$AdminTripsList200ResponseItemsInnerSerializer implements PrimitiveSerial
       yield r'completedAt';
       yield serializers.serialize(
         object.completedAt,
-        specifiedType: const FullType(DateTime),
+        specifiedType: const FullType.nullable(DateTime),
       );
     }
     if (object.costUsd != null) {
@@ -185,8 +185,9 @@ class _$AdminTripsList200ResponseItemsInnerSerializer implements PrimitiveSerial
         case r'completedAt':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(DateTime),
-          ) as DateTime;
+            specifiedType: const FullType.nullable(DateTime),
+          ) as DateTime?;
+          if (valueDes == null) continue;
           result.completedAt = valueDes;
           break;
         case r'costUsd':

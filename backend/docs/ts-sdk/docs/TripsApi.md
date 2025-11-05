@@ -4,17 +4,19 @@ All URIs are relative to *http://localhost:8080*
 
 |Method | HTTP request | Description|
 |------------- | ------------- | -------------|
-|[**tripsAccept**](#tripsaccept) | **POST** /trips/{id}/accept | |
-|[**tripsArrived**](#tripsarrived) | **POST** /trips/{id}/arrived | |
-|[**tripsCancel**](#tripscancel) | **POST** /trips/{id}/cancel | |
-|[**tripsComplete**](#tripscomplete) | **POST** /trips/{id}/complete | |
+|[**tripsAccept**](#tripsaccept) | **POST** /trips/{id}/accept | Aceptar viaje|
+|[**tripsArrived**](#tripsarrived) | **POST** /trips/{id}/arrived | Arribo del conductor|
+|[**tripsCancel**](#tripscancel) | **POST** /trips/{id}/cancel | Cancelar viaje (rider)|
+|[**tripsComplete**](#tripscomplete) | **POST** /trips/{id}/complete | Completar viaje|
+|[**tripsDriverLocation**](#tripsdriverlocation) | **GET** /trips/{id}/driver-location | UbicaciÃ³n actual del driver para el viaje|
 |[**tripsRequest**](#tripsrequest) | **POST** /trips/request | Solicitar viaje|
 |[**tripsSseById**](#tripsssebyid) | **GET** /trips/{id}/sse | Trip live updates (SSE)|
-|[**tripsStart**](#tripsstart) | **POST** /trips/{id}/start | |
+|[**tripsStart**](#tripsstart) | **POST** /trips/{id}/start | Iniciar viaje|
 
 # **tripsAccept**
 > TripsRequest200Response tripsAccept()
 
+El conductor acepta el viaje asignado.
 
 ### Example
 
@@ -62,12 +64,14 @@ const { status, data } = await apiInstance.tripsAccept(
 |**400** | Default Response |  -  |
 |**403** | Default Response |  -  |
 |**404** | Default Response |  -  |
+|**409** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsArrived**
-> TripsRequest200Response tripsArrived()
+> TripsArrived200Response tripsArrived()
 
+El conductor llegï¿½ al punto de recogida.
 
 ### Example
 
@@ -96,7 +100,7 @@ const { status, data } = await apiInstance.tripsArrived(
 
 ### Return type
 
-**TripsRequest200Response**
+**TripsArrived200Response**
 
 ### Authorization
 
@@ -115,12 +119,14 @@ const { status, data } = await apiInstance.tripsArrived(
 |**400** | Default Response |  -  |
 |**403** | Default Response |  -  |
 |**404** | Default Response |  -  |
+|**409** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsCancel**
-> TripsRequest200Response tripsCancel()
+> TripsCancel200Response tripsCancel()
 
+El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.
 
 ### Example
 
@@ -153,7 +159,7 @@ const { status, data } = await apiInstance.tripsCancel(
 
 ### Return type
 
-**TripsRequest200Response**
+**TripsCancel200Response**
 
 ### Authorization
 
@@ -172,12 +178,14 @@ const { status, data } = await apiInstance.tripsCancel(
 |**400** | Default Response |  -  |
 |**403** | Default Response |  -  |
 |**404** | Default Response |  -  |
+|**409** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsComplete**
-> TripsRequest200Response tripsComplete()
+> TripsComplete200Response tripsComplete()
 
+Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).
 
 ### Example
 
@@ -206,7 +214,62 @@ const { status, data } = await apiInstance.tripsComplete(
 
 ### Return type
 
-**TripsRequest200Response**
+**TripsComplete200Response**
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+|**200** | Default Response |  -  |
+|**400** | Default Response |  -  |
+|**403** | Default Response |  -  |
+|**404** | Default Response |  -  |
+|**409** | Default Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **tripsDriverLocation**
+> TripsDriverLocation200Response tripsDriverLocation()
+
+Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.
+
+### Example
+
+```typescript
+import {
+    TripsApi,
+    Configuration
+} from './api';
+
+const configuration = new Configuration();
+const apiInstance = new TripsApi(configuration);
+
+let id: string; // (default to undefined)
+
+const { status, data } = await apiInstance.tripsDriverLocation(
+    id
+);
+```
+
+### Parameters
+
+|Name | Type | Description  | Notes|
+|------------- | ------------- | ------------- | -------------|
+| **id** | [**string**] |  | defaults to undefined|
+
+
+### Return type
+
+**TripsDriverLocation200Response**
 
 ### Authorization
 
@@ -231,7 +294,7 @@ const { status, data } = await apiInstance.tripsComplete(
 # **tripsRequest**
 > TripsRequest200Response tripsRequest(tripsRequestRequest)
 
-Crea un viaje y asigna el conductor disponible más cercano.
+Crea un viaje y asigna el conductor disponible mÃ¡s cercano.
 
 ### Example
 
@@ -284,7 +347,7 @@ const { status, data } = await apiInstance.tripsRequest(
 # **tripsSseById**
 > string tripsSseById()
 
-Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED.
+Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).
 
 ### Example
 
@@ -333,24 +396,28 @@ const { status, data } = await apiInstance.tripsSseById(
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **tripsStart**
-> TripsRequest200Response tripsStart()
+> TripsStart200Response tripsStart()
 
+Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.
 
 ### Example
 
 ```typescript
 import {
     TripsApi,
-    Configuration
+    Configuration,
+    TripsStartRequest
 } from './api';
 
 const configuration = new Configuration();
 const apiInstance = new TripsApi(configuration);
 
 let id: string; // (default to undefined)
+let tripsStartRequest: TripsStartRequest; // (optional)
 
 const { status, data } = await apiInstance.tripsStart(
-    id
+    id,
+    tripsStartRequest
 );
 ```
 
@@ -358,12 +425,13 @@ const { status, data } = await apiInstance.tripsStart(
 
 |Name | Type | Description  | Notes|
 |------------- | ------------- | ------------- | -------------|
+| **tripsStartRequest** | **TripsStartRequest**|  | |
 | **id** | [**string**] |  | defaults to undefined|
 
 
 ### Return type
 
-**TripsRequest200Response**
+**TripsStart200Response**
 
 ### Authorization
 
@@ -371,7 +439,7 @@ const { status, data } = await apiInstance.tripsStart(
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 
@@ -382,6 +450,7 @@ const { status, data } = await apiInstance.tripsStart(
 |**400** | Default Response |  -  |
 |**403** | Default Response |  -  |
 |**404** | Default Response |  -  |
+|**409** | Default Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

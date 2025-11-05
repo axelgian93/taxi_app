@@ -1,8 +1,8 @@
-# openapi.model.TripsRequest200ResponseTrip
+# taxi_openapi.model.TripsRequest200ResponseTrip
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

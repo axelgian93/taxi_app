@@ -165,21 +165,21 @@ class _$AdminTariffsCreateRequestSerializer implements PrimitiveSerializer<Admin
       yield r'nightStartHour';
       yield serializers.serialize(
         object.nightStartHour,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.nightEndHour != null) {
       yield r'nightEndHour';
       yield serializers.serialize(
         object.nightEndHour,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.cancellationGraceSec != null) {
       yield r'cancellationGraceSec';
       yield serializers.serialize(
         object.cancellationGraceSec,
-        specifiedType: const FullType(int),
+        specifiedType: const FullType.nullable(int),
       );
     }
     if (object.cancellationFeeAcceptedUsd != null) {
@@ -200,7 +200,7 @@ class _$AdminTariffsCreateRequestSerializer implements PrimitiveSerializer<Admin
       yield r'notes';
       yield serializers.serialize(
         object.notes,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.deactivateOld != null) {
@@ -299,22 +299,25 @@ class _$AdminTariffsCreateRequestSerializer implements PrimitiveSerializer<Admin
         case r'nightStartHour':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.nightStartHour = valueDes;
           break;
         case r'nightEndHour':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.nightEndHour = valueDes;
           break;
         case r'cancellationGraceSec':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(int),
-          ) as int;
+            specifiedType: const FullType.nullable(int),
+          ) as int?;
+          if (valueDes == null) continue;
           result.cancellationGraceSec = valueDes;
           break;
         case r'cancellationFeeAcceptedUsd':
@@ -334,8 +337,9 @@ class _$AdminTariffsCreateRequestSerializer implements PrimitiveSerializer<Admin
         case r'notes':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.notes = valueDes;
           break;
         case r'deactivateOld':

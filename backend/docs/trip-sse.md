@@ -12,7 +12,7 @@ Request
   - `Accept: text/event-stream`
   - `Authorization: Bearer <JWT>`
 
-Example stream
+Example stream (including LOCATION)
 ```
 data: {"type":"INIT","status":"ASSIGNED","at":"2025-01-01T12:00:00.000Z"}
 
@@ -20,13 +20,38 @@ data: {"type":"INIT","status":"ASSIGNED","at":"2025-01-01T12:00:00.000Z"}
 
 data: {"type":"ACCEPTED","status":"ACCEPTED","at":"2025-01-01T12:00:10.000Z"}
 
+data: {"type":"LOCATION","at":"2025-01-01T12:00:12.000Z","data":{"lat":-2.170,"lng":-79.922}}
+
 data: {"type":"ARRIVED","status":"ARRIVED","at":"2025-01-01T12:01:20.000Z"}
+
+data: {"type":"LOCATION","at":"2025-01-01T12:01:22.000Z","data":{"lat":-2.171,"lng":-79.921}}
 
 data: {"type":"STARTED","status":"STARTED","at":"2025-01-01T12:02:00.000Z"}
 
 data: {"type":"COMPLETED","status":"COMPLETED","at":"2025-01-01T12:15:30.000Z","data":{"totalUsd":7.8}}
 
 ```
+
+Test with curl
+
+1) Obtain a JWT for rider or driver of the trip.
+2) In one terminal, connect to SSE:
+
+```
+curl -N -H "Accept: text/event-stream" -H "Authorization: Bearer $JWT" \
+  http://localhost:8080/trips/$TRIP_ID/sse
+```
+
+3) In another terminal, simulate driver location updates (requires DRIVER JWT):
+
+```
+curl -X POST http://localhost:8080/drivers/location \
+  -H "Authorization: Bearer $DRIVER_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"lat": -2.170, "lng": -79.922, "status": "IDLE"}'
+```
+
+You should see `data: {"type":"LOCATION",...}` events in the SSE stream.
 
 Flutter (http.Client) minimal example
 ```dart
@@ -104,4 +129,3 @@ Recommendations
 - Implement reconnection with exponential backoff (e.g. 1s, 2s, 4s, max 30s).
 - Close stream when screen is not visible to save battery/network.
 - Keep using push notifications (FCM) for background updates; SSE is best‑effort for foreground.
-

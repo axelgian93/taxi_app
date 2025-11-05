@@ -1,8 +1,8 @@
-# openapi.model.AdminTariffsUpdateByIdRequest
+# taxi_openapi.model.AdminTariffsUpdateByIdRequest
 
 ## Load the model package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 ## Properties

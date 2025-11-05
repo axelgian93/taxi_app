@@ -61,6 +61,19 @@
         { "expr": "app_matching_idle_fallback_total{app=\"taxi_api\"}", "refId": "C" }
       ]
     }
+    ,
+    {
+      "type": "timeseries",
+      "title": "HTTP p95 per Route (s)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (route,le) (rate(app_http_request_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "{{route}}"
+        }
+      ]
+    }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
@@ -74,4 +87,3 @@
   "version": 1,
   "weekStart": ""
 }
-

@@ -1,8 +1,8 @@
-# openapi.api.DefaultApi
+# taxi_openapi.api.DefaultApi
 
 ## Load the API package
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 ```
 
 All URIs are relative to *http://localhost:8080*
@@ -19,9 +19,9 @@ Method | HTTP request | Description
 
 ### Example
 ```dart
-import 'package:openapi/api.dart';
+import 'package:taxi_openapi/api.dart';
 
-final api = Openapi().getDefaultApi();
+final api = TaxiOpenapi().getDefaultApi();
 
 try {
     api.healthz();

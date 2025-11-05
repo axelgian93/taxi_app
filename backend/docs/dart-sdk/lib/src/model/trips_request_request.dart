@@ -107,14 +107,14 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
       yield r'pickupAddress';
       yield serializers.serialize(
         object.pickupAddress,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     if (object.dropoffAddress != null) {
       yield r'dropoffAddress';
       yield serializers.serialize(
         object.dropoffAddress,
-        specifiedType: const FullType(String),
+        specifiedType: const FullType.nullable(String),
       );
     }
     yield r'distanceKm';
@@ -131,7 +131,7 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
       yield r'preferredMethod';
       yield serializers.serialize(
         object.preferredMethod,
-        specifiedType: const FullType(TripsRequestRequestPreferredMethodEnum),
+        specifiedType: const FullType.nullable(TripsRequestRequestPreferredMethodEnum),
       );
     }
   }
@@ -195,15 +195,17 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
         case r'pickupAddress':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.pickupAddress = valueDes;
           break;
         case r'dropoffAddress':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(String),
-          ) as String;
+            specifiedType: const FullType.nullable(String),
+          ) as String?;
+          if (valueDes == null) continue;
           result.dropoffAddress = valueDes;
           break;
         case r'distanceKm':
@@ -223,8 +225,9 @@ class _$TripsRequestRequestSerializer implements PrimitiveSerializer<TripsReques
         case r'preferredMethod':
           final valueDes = serializers.deserialize(
             value,
-            specifiedType: const FullType(TripsRequestRequestPreferredMethodEnum),
-          ) as TripsRequestRequestPreferredMethodEnum;
+            specifiedType: const FullType.nullable(TripsRequestRequestPreferredMethodEnum),
+          ) as TripsRequestRequestPreferredMethodEnum?;
+          if (valueDes == null) continue;
           result.preferredMethod = valueDes;
           break;
         default:

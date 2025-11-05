@@ -68,3 +68,27 @@ groups:
         annotations:
           summary: "API recovered"
           description: "API is back up and was down within the last 5 minutes"
+
+  - name: taxi-api-errors
+    interval: 30s
+    rules:
+      - alert: Api5xxRateHigh
+        expr: |
+          (sum(rate(app_http_request_duration_seconds_count{status=~"5.."}[5m]))
+           /
+           sum(rate(app_http_request_duration_seconds_count[5m]))) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API 5xx rate >1%"
+          description: "Overall 5xx ratio exceeded 1% in the last 10m"
+
+      - alert: ApiRouteP95LatencyHigh
+        expr: histogram_quantile(0.95, sum by (route,le) (rate(app_http_request_duration_seconds_bucket[5m]))) > 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Route p95 latency high (>1s)"
+          description: "Per-route p95 latency exceeded 1s for 10m"
