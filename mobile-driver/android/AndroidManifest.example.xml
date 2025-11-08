@@ -1,0 +1,28 @@
+<!-- Example AndroidManifest additions for Taxi Driver app (copy into android/app/src/main/AndroidManifest.xml) -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.mobile_driver">
+
+    <!-- Location + Foreground Service permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <application
+        android:label="Driver"
+        android:name=".MainApplication"
+        android:icon="@mipmap/ic_launcher">
+
+        <!-- Google Maps API key (replace YOUR_ANDROID_MAPS_API_KEY) -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="YOUR_ANDROID_MAPS_API_KEY" />
+
+        <!-- If your background service plugin needs service declaration, include here -->
+        <!-- The flutter_background_service plugin auto-registers via manifestMerge, usually not required -->
+
+        <!-- Other Flutter defaults go here (activity, meta-data, etc.) after running `flutter create .` -->
+    </application>
+
+</manifest>
+

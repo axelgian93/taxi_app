@@ -83,7 +83,7 @@ async function tripRoutes(app) {
         (0, metrics_service_1.incCounter)('matching_idle_fallback');
         return best;
     }
-    // POST /trips/request â€” Rider creates a trip and assigns nearest driver
+    // POST /trips/request — Rider creates a trip and assigns nearest driver
     app.post('/trips/request', {
         preHandler: [app.auth.verifyJWT],
         config: {
@@ -96,7 +96,7 @@ async function tripRoutes(app) {
         schema: {
             operationId: 'tripsRequest',
             summary: 'Solicitar viaje',
-            description: 'Crea un viaje y asigna el conductor disponible mÃ¡s cercano.',
+            description: 'Crea un viaje y asigna el conductor disponible más cercano.',
             tags: ['Trips'],
             body: trip_schemas_1.requestTripBody,
             response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Missing city' } }
@@ -137,7 +137,7 @@ async function tripRoutes(app) {
         if (bestUserId) {
             (0, events_service_1.publishTripEvent)(trip.id, { type: 'ASSIGNED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: bestUserId } });
             // Push notifications
-            (0, push_service_1.sendPushToUser)(trip.riderId, { title: 'Conductor asignado', body: 'Se asignï¿½ un conductor a tu viaje.' });
+            (0, push_service_1.sendPushToUser)(trip.riderId, { title: 'Conductor asignado', body: 'Se asign� un conductor a tu viaje.' });
             (0, push_service_1.sendPushToUser)(bestUserId, { title: 'Nuevo viaje asignado', body: 'Tienes un nuevo viaje por atender.' });
         }
         else {
@@ -145,8 +145,8 @@ async function tripRoutes(app) {
         }
         return reply.send({ ok: true, trip: { id: trip.id, status: trip.status } });
     });
-    // POST /trips/:id/accept â€” Driver accepts assigned trip
-    app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for accept' } } } } }, async (req, reply) => {
+    // POST /trips/:id/accept — Driver accepts assigned trip
+    app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Email not verified' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for accept' } } } } }, async (req, reply) => {
         const p = req.params;
         const id = p?.id || '';
         if (!id)
@@ -176,11 +176,11 @@ async function tripRoutes(app) {
         (0, events_service_1.publishTripEvent)(id, { type: 'ACCEPTED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: user.id } });
         // Notify rider
         if (up.driverId)
-            (0, push_service_1.sendPushToUser)((await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } })).riderId, { title: 'Conductor aceptï¿½', body: 'Tu conductor aceptï¿½ el viaje.' });
+            (0, push_service_1.sendPushToUser)((await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } })).riderId, { title: 'Conductor acept�', body: 'Tu conductor acept� el viaje.' });
         return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } });
     });
-    // POST /trips/:id/arrived â€” Driver arrived at pickup
-    app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor llegï¿½ al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ARRIVED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for arrived' } } } } }, async (req, reply) => {
+    // POST /trips/:id/arrived — Driver arrived at pickup
+    app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor lleg� al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ARRIVED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Email not verified' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for arrived' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         if (!id)
@@ -198,11 +198,11 @@ async function tripRoutes(app) {
         (0, events_service_1.publishTripEvent)(id, { type: 'ARRIVED', status: 'ARRIVED', at: new Date().toISOString() });
         const tr = await prisma_1.default.trip.findUnique({ where: { id }, select: { riderId: true } });
         if (tr)
-            (0, push_service_1.sendPushToUser)(tr.riderId, { title: 'Conductor llegï¿½', body: 'Tu conductor ha llegï¿½o al punto de recogida.' });
+            (0, push_service_1.sendPushToUser)(tr.riderId, { title: 'Conductor lleg�', body: 'Tu conductor ha lleg�o al punto de recogida.' });
         return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } });
     });
-    // POST /trips/:id/start â€” Start trip, optionally preauthorize CARD
-    app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH', 'CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'STARTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for start' } } } } }, async (req, reply) => {
+    // POST /trips/:id/start — Start trip, optionally preauthorize CARD
+    app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe est� configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH', 'CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'STARTED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Email not verified' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for start' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const { method } = (req.body || {});
         const payMethod = method || 'CASH';
@@ -250,8 +250,8 @@ async function tripRoutes(app) {
             (0, push_service_1.sendPushToUser)(trS.riderId, { title: 'Viaje iniciado', body: 'Tu viaje ha comenzado.' });
         return reply.send({ ok: true, trip: { id, status: 'STARTED' } });
     });
-    // POST /trips/:id/complete â€” Complete trip and settle payment
-    app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'COMPLETED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for complete' } } } } }, async (req, reply) => {
+    // POST /trips/:id/complete — Complete trip and settle payment
+    app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'COMPLETED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Email not verified' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for complete' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         if (!id)
@@ -292,8 +292,8 @@ async function tripRoutes(app) {
         }
         return reply.send({ ok: true, trip: { id, status: 'COMPLETED' } });
     });
-    // POST /trips/:id/cancel â€” Rider cancels; may apply fee if ARRIVED or beyond grace
-    app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'CANCELED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Forbidden' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for cancel' } } } } }, async (req, reply) => {
+    // POST /trips/:id/cancel — Rider cancels; may apply fee if ARRIVED or beyond grace
+    app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee seg�n estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'CANCELED' } } }, 400: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid id' } }, 403: { ...trip_schemas_1.errorResponse, example: { error: 'Email not verified' } }, 404: { ...trip_schemas_1.errorResponse, example: { error: 'Trip not found' } }, 409: { ...trip_schemas_1.errorResponse, example: { error: 'Invalid state for cancel' } } } } }, async (req, reply) => {
         const id = req.params.id;
         const user = req.user;
         const { reason } = (req.body || {});
@@ -337,15 +337,15 @@ async function tripRoutes(app) {
         (0, events_service_1.publishTripEvent)(id, { type: 'CANCELED', status: 'CANCELED', at: new Date().toISOString(), data: { reason: reason || 'RIDER_CANCEL' } });
         const trX = await prisma_1.default.trip.findUnique({ where: { id }, select: { driverId: true } });
         if (trX?.driverId)
-            (0, push_service_1.sendPushToUser)(trX.driverId, { title: 'Viaje cancelado', body: 'El pasajero cancelÃ³ el viaje.' });
+            (0, push_service_1.sendPushToUser)(trX.driverId, { title: 'Viaje cancelado', body: 'El pasajero canceló el viaje.' });
         return reply.send({ ok: true, trip: { id, status: 'CANCELED' } });
     });
-    // GET /trips/:id/sse â€” Server-Sent Events stream for live trip updates
+    // GET /trips/:id/sse — Server-Sent Events stream for live trip updates
     app.get('/trips/:id/sse', {
         preHandler: [app.auth.verifyJWT],
         schema: {
             summary: 'Trip live updates (SSE)',
-            description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).',
+            description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).',
             tags: ['Trips'],
             produces: ['text/event-stream'],
             response: {
@@ -415,14 +415,14 @@ async function tripRoutes(app) {
             return reply.hijack();
         }
     });
-    // GET /trips/:id/driver-location ï¿½ Current driver lat/lng for this trip
+    // GET /trips/:id/driver-location � Current driver lat/lng for this trip
     app.get('/trips/:id/driver-location', {
         preHandler: [app.auth.verifyJWT],
         schema: {
             operationId: 'tripsDriverLocation',
             tags: ['Trips'],
-            summary: 'UbicaciÃ³n actual del driver para el viaje',
-            description: 'Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.',
+            summary: 'Ubicación actual del driver para el viaje',
+            description: 'Devuelve lat/lng y timestamp de la última ubicaci�n reportada por el driver asignado al trip.',
             params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false },
             response: {
                 200: {
@@ -437,7 +437,7 @@ async function tripRoutes(app) {
                     example: { tripId: 'trp_123', driverId: 'u_driver', lat: -2.17, lng: -79.92, locationUpdatedAt: '2025-01-01T12:00:00.000Z' }
                 },
                 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid id' } },
-                403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } },
+                403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } },
                 404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Trip not found' } },
             }
         },

@@ -3,6 +3,7 @@ import 'screens/login_screen.dart';
 import 'screens/receipt_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/sessions_screen.dart';
+import 'screens/verify_email_screen.dart';
 
 void main() {
   runApp(const TaxiRiderApp());
@@ -19,6 +20,7 @@ class TaxiRiderApp extends StatelessWidget {
       routes: {
         '/history': (ctx) => const HistoryScreen(),
         '/sessions': (ctx) => const SessionsScreen(),
+        '/verify': (ctx) => const VerifyEmailScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/receipt') {

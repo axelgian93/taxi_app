@@ -144,6 +144,13 @@ class _CombinedScreenState extends State<CombinedScreen> {
             icon: const Icon(Icons.history),
           ),
           IconButton(
+            tooltip: 'Verify Email / Reset',
+            onPressed: () {
+              Navigator.of(context).pushNamed('/verify');
+            },
+            icon: const Icon(Icons.verified_user),
+          ),
+          IconButton(
             tooltip: 'Sesiones',
             onPressed: () {
               Navigator.of(context).pushNamed('/sessions');

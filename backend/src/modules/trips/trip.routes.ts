@@ -1,4 +1,4 @@
-﻿// backend/src/modules/trips/trip.routes.ts
+// backend/src/modules/trips/trip.routes.ts
 import type { FastifyInstance } from 'fastify'
 
 import prisma from '../../lib/prisma'
@@ -79,7 +79,7 @@ export default async function tripRoutes(app: FastifyInstance) {
     incCounter('matching_idle_fallback')
     return best
   }
-  // POST /trips/request â€” Rider creates a trip and assigns nearest driver
+  // POST /trips/request — Rider creates a trip and assigns nearest driver
   app.post('/trips/request', {
     preHandler: [app.auth.verifyJWT],
     config: {
@@ -92,7 +92,7 @@ export default async function tripRoutes(app: FastifyInstance) {
     schema: {
       operationId: 'tripsRequest',
       summary: 'Solicitar viaje',
-      description: 'Crea un viaje y asigna el conductor disponible mÃ¡s cercano.',
+      description: 'Crea un viaje y asigna el conductor disponible más cercano.',
       tags: ['Trips'],
       body: requestTripBody,
       response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: ({ ...errorResponse, example: { error: 'Missing city' } } as any)
@@ -132,7 +132,7 @@ export default async function tripRoutes(app: FastifyInstance) {
     if (bestUserId) {
       publishTripEvent(trip.id, { type: 'ASSIGNED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: bestUserId } })
       // Push notifications
-      sendPushToUser(trip.riderId, { title: 'Conductor asignado', body: 'Se asignï¿½ un conductor a tu viaje.' })
+      sendPushToUser(trip.riderId, { title: 'Conductor asignado', body: 'Se asign� un conductor a tu viaje.' })
       sendPushToUser(bestUserId, { title: 'Nuevo viaje asignado', body: 'Tienes un nuevo viaje por atender.' })
     } else {
       publishTripEvent(trip.id, { type: 'INIT', status: 'REQUESTED', at: new Date().toISOString() })
@@ -140,8 +140,8 @@ export default async function tripRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, trip: { id: trip.id, status: trip.status } })
   })
 
-  // POST /trips/:id/accept â€” Driver accepts assigned trip
-  app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for accept' } } as any) } } as any },
+  // POST /trips/:id/accept — Driver accepts assigned trip
+  app.post('/trips/:id/accept', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsAccept', tags: ['Trips'], summary: 'Aceptar viaje', description: 'El conductor acepta el viaje asignado.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ACCEPTED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Email not verified' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for accept' } } as any) } } as any },
     async (req: any, reply) => {
       const p = req.params as { id?: string }; const id = p?.id || ''
       if (!id) return reply.code(400).send({ error: 'Invalid id' })
@@ -166,13 +166,58 @@ export default async function tripRoutes(app: FastifyInstance) {
       const up = { id, status: 'ACCEPTED' as any, driverId: user.id }
       publishTripEvent(id, { type: 'ACCEPTED', status: 'ACCEPTED', at: new Date().toISOString(), data: { driverId: user.id } })
       // Notify rider
-      if (up.driverId) sendPushToUser((await prisma.trip.findUnique({ where: { id }, select: { riderId: true } }))!.riderId, { title: 'Conductor aceptï¿½', body: 'Tu conductor aceptï¿½ el viaje.' })
+      if (up.driverId) sendPushToUser((await prisma.trip.findUnique({ where: { id }, select: { riderId: true } }))!.riderId, { title: 'Conductor acept�', body: 'Tu conductor acept� el viaje.' })
       return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } })
     }
   )
 
-  // POST /trips/:id/arrived â€” Driver arrived at pickup
-  app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor llegï¿½ al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ARRIVED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for arrived' } } as any) } } as any },
+  // GET /trips/:id/cancel/quote — Estimate cancellation fee based on current state (authorized roles)
+  app.get('/trips/:id/cancel/quote', {
+    preHandler: [app.auth.verifyJWT],
+    schema: { operationId: 'tripsCancelQuote', tags: ['Trips'], summary: 'Cotizar tarifa de cancelación', response: { 200: { type: 'object', properties: { cancellable: { type: 'boolean' }, feeUsd: { type: 'number' }, currency: { type: 'string' }, reason: { type: 'string' }, graceRemainingSec: { type: 'integer', nullable: true } } } } } as any,
+  }, async (req: any, reply) => {
+    const id = (req.params as any).id as string
+    if (!id) return reply.code(400).send({ error: 'Invalid id' })
+    const t = await prisma.trip.findUnique({ where: { id }, select: { id: true, status: true, requestedAt: true, acceptedAt: true, arrivedAt: true, riderId: true, driverId: true } as any })
+    if (!t) return reply.code(404).send({ error: 'Trip not found' })
+    const u = req.user as { id: string; role: 'ADMIN'|'DRIVER'|'RIDER' }
+    if (u.role !== 'ADMIN' && u.id !== t.riderId && u.id !== t.driverId) return reply.code(403).send({ error: 'Forbidden' })
+    const now = Date.now()
+    const graceMs = Number(env.cancellationFeeGraceSec || 0) * 1000
+    const remaining = (from?: Date | null) => {
+      if (!from || !graceMs) return 0
+      const diff = now - new Date(from as any).getTime()
+      return Math.max(0, Math.floor((graceMs - diff) / 1000))
+    }
+    let fee = 0; let reason = 'NO_FEE'; let graceRemainingSec: number|null = null; let cancellable = true
+    const st = String(t.status)
+    if (st === 'REQUESTED' || st === 'ASSIGNED') { fee = 0; reason = 'BEFORE_ACCEPT'; }
+    else if (st === 'ACCEPTED') { const rem = remaining((t as any).acceptedAt || (t as any).requestedAt); graceRemainingSec = rem; fee = rem>0?0:Number(env.cancellationFeeAcceptedUsd||0); reason = rem>0?'WITHIN_GRACE_ACCEPTED':'AFTER_GRACE_ACCEPTED' }
+    else if (st === 'ARRIVED') { const rem = remaining((t as any).arrivedAt || (t as any).acceptedAt); graceRemainingSec = rem; fee = rem>0?0:Number(env.cancellationFeeArrivedUsd||0); reason = rem>0?'WITHIN_GRACE_ARRIVED':'AFTER_GRACE_ARRIVED' }
+    else { cancellable = false; fee = 0; reason = 'NOT_CANCELLABLE'; graceRemainingSec = null }
+    return reply.send({ cancellable, feeUsd: Number(fee||0), currency: 'USD', reason, graceRemainingSec })
+  })
+
+  // POST /trips/:id/reject — Driver rejects assigned/requested trip for reassign
+  app.post('/trips/:id/reject', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsReject', tags: ['Trips'], summary: 'Rechazar viaje (driver)', description: 'El conductor rechaza el viaje asignado. Vuelve a estado REQUESTED para re-asignación.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'REQUESTED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for reject' } } as any) } } as any },
+    async (req: any, reply) => {
+      const id = (req.params as any).id as string
+      const user = req.user as { id: string; role: string }
+      if (!id) return reply.code(400).send({ error: 'Invalid id' })
+      if (user.role !== 'DRIVER' && user.role !== 'ADMIN') return reply.code(403).send({ error: 'Forbidden' })
+      const t = await prisma.trip.findUnique({ where: { id }, select: { id: true, status: true, driverId: true, riderId: true } })
+      if (!t) return reply.code(404).send({ error: 'Trip not found' })
+      if (t.driverId && t.driverId !== user.id && user.role !== 'ADMIN') return reply.code(403).send({ error: 'Not your trip' })
+      if (t.status !== 'REQUESTED' && t.status !== 'ASSIGNED') return reply.code(409).send({ error: 'Invalid state for reject' })
+      await prisma.trip.update({ where: { id }, data: { status: 'REQUESTED' as any, driverId: null } })
+      publishTripEvent(id, { type: 'REASSIGNED', status: 'REQUESTED', at: new Date().toISOString(), data: { reason: 'DRIVER_REJECTED', driverId: user.id } })
+      if (t.riderId) sendPushToUser(t.riderId, { title: 'Buscando otro conductor', body: 'El conductor rechazó el viaje, buscando otro.' })
+      return reply.send({ ok: true, trip: { id, status: 'REQUESTED' } })
+    }
+  )
+
+  // POST /trips/:id/arrived — Driver arrived at pickup
+  app.post('/trips/:id/arrived', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsArrived', tags: ['Trips'], summary: 'Arribo del conductor', description: 'El conductor lleg� al punto de recogida.', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'ARRIVED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Email not verified' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for arrived' } } as any) } } as any },
     async (req: any, reply) => {
       const id = (req.params as any).id as string
       const user = req.user as { id: string; role: string }
@@ -185,13 +230,13 @@ export default async function tripRoutes(app: FastifyInstance) {
       if (__resArrived.count === 0) return reply.code(409).send({ error: 'Invalid state for arrived' })
       publishTripEvent(id, { type: 'ARRIVED', status: 'ARRIVED', at: new Date().toISOString() })
       const tr = await prisma.trip.findUnique({ where: { id }, select: { riderId: true } })
-      if (tr) sendPushToUser(tr.riderId, { title: 'Conductor llegï¿½', body: 'Tu conductor ha llegï¿½o al punto de recogida.' })
+      if (tr) sendPushToUser(tr.riderId, { title: 'Conductor lleg�', body: 'Tu conductor ha lleg�o al punto de recogida.' })
       return reply.send({ ok: true, trip: { id, status: 'ARRIVED' } })
     }
   )
 
-  // POST /trips/:id/start â€” Start trip, optionally preauthorize CARD
-  app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe estï¿½ configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH','CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'STARTED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for start' } } as any) } } as any },
+  // POST /trips/:id/start — Start trip, optionally preauthorize CARD
+  app.post('/trips/:id/start', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsStart', tags: ['Trips'], summary: 'Iniciar viaje', description: 'Inicia el viaje; si method=CARD y Stripe est� configurado, preautoriza.', body: { type: 'object', properties: { method: { type: 'string', enum: ['CASH','CARD'], default: 'CASH' } }, additionalProperties: false, example: { method: 'CASH' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'STARTED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Email not verified' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for start' } } as any) } } as any },
     async (req: any, reply) => {
       const id = (req.params as any).id as string
       const { method } = (req.body || {}) as { method?: 'CASH'|'CARD' }
@@ -234,8 +279,8 @@ export default async function tripRoutes(app: FastifyInstance) {
     }
   )
 
-  // POST /trips/:id/complete â€” Complete trip and settle payment
-  app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'COMPLETED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for complete' } } as any) } } as any },
+  // POST /trips/:id/complete — Complete trip and settle payment
+  app.post('/trips/:id/complete', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsComplete', tags: ['Trips'], summary: 'Completar viaje', description: 'Completa el viaje y liquida el pago (captura Stripe o marca CASH pagado).', response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'COMPLETED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Email not verified' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for complete' } } as any) } } as any },
     async (req: any, reply) => {
       const id = (req.params as any).id as string
       const user = req.user as { id: string; role: string }
@@ -271,8 +316,8 @@ export default async function tripRoutes(app: FastifyInstance) {
     }
   )
 
-  // POST /trips/:id/cancel â€” Rider cancels; may apply fee if ARRIVED or beyond grace
-  app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee segï¿½n estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'CANCELED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Forbidden' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for cancel' } } as any) } } as any },
+  // POST /trips/:id/cancel — Rider cancels; may apply fee if ARRIVED or beyond grace
+  app.post('/trips/:id/cancel', { preHandler: [app.auth.verifyJWT], schema: { operationId: 'tripsCancel', tags: ['Trips'], summary: 'Cancelar viaje (rider)', description: 'El rider cancela el viaje; puede aplicar fee seg�n estado y reglas.', body: { type: 'object', properties: { reason: { type: 'string' } }, additionalProperties: false, example: { reason: 'CHANGED_MIND' } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' }, trip: { type: 'object', properties: { id: { type: 'string' }, status: { type: 'string' } } } }, example: { ok: true, trip: { id: 'trp_123', status: 'CANCELED' } } }, 400: ({ ...errorResponse, example: { error: 'Invalid id' } } as any), 403: ({ ...errorResponse, example: { error: 'Email not verified' } } as any), 404: ({ ...errorResponse, example: { error: 'Trip not found' } } as any), 409: ({ ...errorResponse, example: { error: 'Invalid state for cancel' } } as any) } } as any },
     async (req: any, reply) => {
       const id = (req.params as any).id as string
       const user = req.user as { id: string; role: string }
@@ -308,16 +353,16 @@ export default async function tripRoutes(app: FastifyInstance) {
       }
       publishTripEvent(id, { type: 'CANCELED', status: 'CANCELED', at: new Date().toISOString(), data: { reason: reason || 'RIDER_CANCEL' } })
       const trX = await prisma.trip.findUnique({ where: { id }, select: { driverId: true } })
-      if (trX?.driverId) sendPushToUser(trX.driverId, { title: 'Viaje cancelado', body: 'El pasajero cancelÃ³ el viaje.' })
+      if (trX?.driverId) sendPushToUser(trX.driverId, { title: 'Viaje cancelado', body: 'El pasajero canceló el viaje.' })
       return reply.send({ ok: true, trip: { id, status: 'CANCELED' } })
     }
   )
-  // GET /trips/:id/sse â€” Server-Sent Events stream for live trip updates
+  // GET /trips/:id/sse — Server-Sent Events stream for live trip updates
   app.get('/trips/:id/sse', {
     preHandler: [app.auth.verifyJWT],
     schema: {
       summary: 'Trip live updates (SSE)',
-      description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. EnvÃ­a eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).',
+      description: 'Stream de eventos del viaje en tiempo real para Rider/Driver via Server-Sent Events. Envía eventos como INIT/ASSIGNED/ACCEPTED/ARRIVED/STARTED/COMPLETED/CANCELED y LOCATION (lat/lng del driver).',
       tags: ['Trips'],
       produces: ['text/event-stream'],
       response: {
@@ -390,7 +435,7 @@ export default async function tripRoutes(app: FastifyInstance) {
     }
   })
   
-  // GET /trips/:id/driver-location ï¿½ Current driver lat/lng for this trip
+  // GET /trips/:id/driver-location � Current driver lat/lng for this trip
   app.get(
     '/trips/:id/driver-location',
     {
@@ -398,8 +443,8 @@ export default async function tripRoutes(app: FastifyInstance) {
       schema: {
         operationId: 'tripsDriverLocation',
         tags: ['Trips'],
-        summary: 'UbicaciÃ³n actual del driver para el viaje',
-        description: 'Devuelve lat/lng y timestamp de la Ãºltima ubicaciï¿½n reportada por el driver asignado al trip.',
+        summary: 'Ubicación actual del driver para el viaje',
+        description: 'Devuelve lat/lng y timestamp de la última ubicaci�n reportada por el driver asignado al trip.',
         params: { type: 'object', required: ['id'], properties: { id: { type: 'string' } }, additionalProperties: false },
         response: {
           200: {
@@ -414,7 +459,7 @@ export default async function tripRoutes(app: FastifyInstance) {
             example: { tripId: 'trp_123', driverId: 'u_driver', lat: -2.17, lng: -79.92, locationUpdatedAt: '2025-01-01T12:00:00.000Z' }
           },
           400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid id' } },
-          403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } },
+          403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } },
           404: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Trip not found' } },
         }
       } as any,
@@ -440,6 +485,7 @@ export default async function tripRoutes(app: FastifyInstance) {
     }
   )
 }
+
 
 
 

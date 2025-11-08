@@ -61,17 +61,10 @@ try {
 catch { }
 const PORT = Number(process.env.PORT || 8080);
 const NODE_ENV = process.env.NODE_ENV || 'development';
-function parseCorsOrigin() {
-    const raw = (process.env.CORS_ORIGIN || '*').trim();
-    const isProd = (NODE_ENV === 'production');
-    if (raw === '*' || raw === 'true') {
-        // In production, do not allow wildcard CORS; require explicit allowlist
-        if (isProd)
-            return [];
-        return true;
-    }
+function parseCorsAllowlist() {
+    const raw = (process.env.CORS_ORIGIN || '').trim();
     const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
-    return parts.length ? parts : ['http://localhost:3000'];
+    return new Set(parts);
 }
 const RL_MAX = Number(process.env.RATE_LIMIT_MAX || 200);
 const RL_WIN = process.env.RATE_LIMIT_TIME_WINDOW || '1 minute';
@@ -85,7 +78,27 @@ async function buildServer() {
             ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
             : true
     });
-    await app.register(cors_1.default, { origin: parseCorsOrigin(), credentials: true });
+    // Strict CORS in production: require explicit allowlist via CORS_ORIGIN
+    if (NODE_ENV === 'production') {
+        const allowlist = parseCorsAllowlist();
+        await app.register(cors_1.default, {
+            origin: (origin, cb) => {
+                // Allow non-browser or same-origin requests (no Origin header)
+                if (!origin)
+                    return cb(null, true);
+                if (allowlist.size === 0)
+                    return cb(new Error('CORS: origin not allowed'), false);
+                cb(null, allowlist.has(origin));
+            },
+            credentials: true,
+            methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+            allowedHeaders: ['Authorization', 'Content-Type', 'Accept', 'X-Requested-With']
+        });
+    }
+    else {
+        // Dev: allow all by default
+        await app.register(cors_1.default, { origin: true, credentials: true });
+    }
     await app.register(swagger_1.default, {
         openapi: {
             openapi: '3.0.3',
@@ -127,8 +140,9 @@ async function buildServer() {
     await app.register(driver_presence_1.default);
     // Ensure operationId mapping is applied as routes are registered
     await app.register(operation_ids_1.default);
-    // Inject default error response schemas (401/403/409/429) if missing
     await app.register(error_schemas_1.default);
+    // Require verified email for sensitive routes (drivers, payments setup)
+    await app.register(require('./plugins/require-verified').default);
     // Default rate-limit for admin export endpoints (applies on route registration)
     await app.register(admin_export_rate_limit_1.default);
     // ETag/Cache-Control for admin export endpoints (applies onSend)

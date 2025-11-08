@@ -1,0 +1,21 @@
+// Example productFlavors for Rider app. Copy into android/app/build.gradle and adjust.
+android {
+    // ... existing config
+    flavorDimensions "env"
+    productFlavors {
+        dev {
+            dimension "env"
+            applicationIdSuffix ".dev"
+            resValue "string", "app_name", "Taxi Rider (Dev)"
+        }
+        prod {
+            dimension "env"
+            resValue "string", "app_name", "Taxi Rider"
+        }
+    }
+}
+
+// Then run:
+// flutter run --flavor dev -t lib/main.dart --dart-define=ENV=dev --dart-define=BASE_URL=http://10.0.2.2:8081
+// flutter run --flavor prod -t lib/main.dart --dart-define=ENV=prod --dart-define=BASE_URL=http://10.0.2.2:8080
+

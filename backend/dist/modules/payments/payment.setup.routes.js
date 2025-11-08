@@ -14,7 +14,7 @@ async function paymentSetupRoutes(app) {
         return;
     }
     // Create SetupIntent to save a card on file
-    app.post('/payments/setup-intent', { schema: { operationId: 'paymentsCreateSetupIntent', tags: ['payments'], summary: 'Crear SetupIntent', description: 'Rider crea un SetupIntent para guardar una tarjeta. Devuelve client_secret.', response: { 200: { type: 'object', properties: { clientSecret: { type: 'string' } } }, 400: { type: 'object', properties: { error: { type: 'string' } } }, 404: { type: 'object', properties: { error: { type: 'string' } } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
+    app.post('/payments/setup-intent', { schema: { operationId: 'paymentsCreateSetupIntent', tags: ['payments'], summary: 'Crear SetupIntent', description: 'Rider crea un SetupIntent para guardar una tarjeta. Devuelve client_secret.', response: { 200: { type: 'object', properties: { clientSecret: { type: 'string' } } }, 400: { type: 'object', properties: { error: { type: 'string' } } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } }, 404: { type: 'object', properties: { error: { type: 'string' } } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
         const userId = req.user?.id;
         const user = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { email: true, stripeCustomerId: true } });
         if (!user)
@@ -29,7 +29,7 @@ async function paymentSetupRoutes(app) {
         return reply.send({ clientSecret: setup.client_secret });
     });
     // Set default payment method for customer
-    app.post('/payments/set-default', { schema: { operationId: 'paymentsSetDefaultMethod', tags: ['payments'], summary: 'Definir PM por defecto', description: 'Guarda el paymentMethod como predeterminado en Stripe y DB.', body: { type: 'object', required: ['paymentMethodId'], properties: { paymentMethodId: { type: 'string', example: 'pm_123' } } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } }, 400: { type: 'object', properties: { error: { type: 'string' } } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
+    app.post('/payments/set-default', { schema: { operationId: 'paymentsSetDefaultMethod', tags: ['payments'], summary: 'Definir PM por defecto', description: 'Guarda el paymentMethod como predeterminado en Stripe y DB.', body: { type: 'object', required: ['paymentMethodId'], properties: { paymentMethodId: { type: 'string', example: 'pm_123' } } }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } }, 400: { type: 'object', properties: { error: { type: 'string' } } }, 403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } } } }, preHandler: app.auth.verifyJWT }, async (req, reply) => {
         const userId = req.user?.id;
         const { paymentMethodId } = req.body;
         const u = await prisma_1.default.user.findUnique({ where: { id: userId }, select: { stripeCustomerId: true } });

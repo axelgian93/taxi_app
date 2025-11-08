@@ -1,0 +1,20 @@
+// Example AppDelegate.m for enabling Google Maps API key (Objective-C)
+// Copy relevant lines into your ios/Runner/AppDelegate.m if your project uses ObjC
+
+#import "AppDelegate.h"
+#import "GeneratedPluginRegistrant.h"
+#import <GoogleMaps/GoogleMaps.h>
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+  // Provide your Google Maps API key
+  [GMSServices provideAPIKey:@"YOUR_IOS_MAPS_API_KEY"];
+
+  [GeneratedPluginRegistrant registerWithRegistry:self];
+  return [super application:application didFinishLaunchingWithOptions:launchOptions];
+}
+
+@end
+

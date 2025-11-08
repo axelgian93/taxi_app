@@ -4,6 +4,8 @@ import bcrypt from 'bcrypt'
 import prisma from '../../lib/prisma'
 import { issueRefreshToken, rotateRefreshToken, revokeRefreshToken, revokeAllForUser } from './refresh.service'
 import { checkLockedSeconds, registerFailureAndMaybeLock, clearFailuresAndUnlock } from './login-lock.service'
+import crypto from 'crypto'
+import { sendMail, tokenLink } from '../../services/email.service'
 
 type Role = 'ADMIN' | 'DRIVER' | 'RIDER'
 
@@ -275,6 +277,130 @@ export default async function authRoutes(app: FastifyInstance) {
     return reply.send({ count: res.count })
   })
 
+  // Request email verification (logged-in)
+  app.post('/auth/request-verify-email', {
+    preHandler: app.auth.verifyJWT,
+    schema: { operationId: 'authRequestVerifyEmail', tags: ['auth'], response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } } } },
+    config: { rateLimit: { max: 3, timeWindow: '10 minute', keyGenerator: (req:any)=> `vreq:${req.user?.id}` } }
+  }, async (req: any, reply) => {
+    const userId = req.user?.id as string
+    const token = crypto.randomBytes(24).toString('hex')
+    const ttlMin = Number(process.env.EMAIL_VERIFY_TTL_MIN || 30)
+    const expiresAt = new Date(Date.now() + ttlMin*60*1000)
+    await (prisma as any).emailVerifyToken.create({ data: { userId, token, expiresAt } })
+    req.log.info({ to: req.user?.email, token }, 'Email verify token issued')
+    return reply.send({ ok: true })
+  })
+
+  // Request email verification (logged-in)
+  app.post('/auth/request-verify-email', {
+    preHandler: app.auth.verifyJWT,
+    schema: { operationId: 'authRequestVerifyEmail', tags: ['auth'], response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } } } },
+    config: { rateLimit: { max: 3, timeWindow: '10 minute', keyGenerator: (req:any)=> `vreq:${req.user?.id}` } }
+  }, async (req: any, reply) => {
+    const userId = req.user?.id as string
+    const token = crypto.randomBytes(24).toString('hex')
+    const ttlMin = Number(process.env.EMAIL_VERIFY_TTL_MIN || 30)
+    const expiresAt = new Date(Date.now() + ttlMin*60*1000)
+    await (prisma as any).emailVerifyToken.create({ data: { userId, token, expiresAt } })
+    const link = tokenLink('VERIFY_EMAIL_URL', token)
+    const ok = await sendMail({
+      to: String((req.user as any)?.email || ''),
+      subject: 'Verify your email',
+      text: link ? `Click to verify your email: ${link}` : `Your verification token: ${token}`,
+      html: link ? `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p>` : `<p>Your verification token:</p><pre>${token}</pre>`,
+    }).catch(() => false)
+    if (!ok) req.log.info({ to: req.user?.email, token, link }, 'Email verify token (email not configured; logged only)')
+    return reply.send({ ok: true })
+  })
+
+  // Verify email
+  app.post('/auth/verify-email', {
+    schema: { operationId: 'authVerifyEmail', tags: ['auth'], body: { type: 'object', required: ['token'], properties: { token: { type: 'string' } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } }, 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid or expired token' } } } },
+    config: { rateLimit: { max: 20, timeWindow: '10 minute' } }
+  }, async (req: any, reply) => {
+    const { token } = req.body as { token: string }
+    const row = await (prisma as any).emailVerifyToken.findUnique({ where: { token } })
+    if (!row || row.usedAt || row.expiresAt < new Date()) return reply.code(400).send({ error: 'Invalid or expired token' })
+    await prisma.$transaction([
+      (prisma as any).user.update({ where: { id: row.userId }, data: { emailVerifiedAt: new Date() } as any }),
+      (prisma as any).emailVerifyToken.update({ where: { token }, data: { usedAt: new Date() } })
+    ])
+    return reply.send({ ok: true })
+  })
+
+  // Request password reset
+  app.post('/auth/request-password-reset', {
+    schema: { operationId: 'authRequestPasswordReset', tags: ['auth'], body: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } } } },
+    config: { rateLimit: { max: 5, timeWindow: '10 minute', keyGenerator: (req:any)=> `pr:${(req.body as any)?.email || req.ip}` } }
+  }, async (req: any, reply) => {
+    const { email } = req.body as { email: string }
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+    if (user) {
+      const token = crypto.randomBytes(24).toString('hex')
+      const ttlMin = Number(process.env.PASSWORD_RESET_TTL_MIN || 30)
+      const expiresAt = new Date(Date.now() + ttlMin*60*1000)
+      await (prisma as any).passwordResetToken.create({ data: { userId: user.id, token, expiresAt } })
+      const link = tokenLink('RESET_PASSWORD_URL', token)
+      const ok = await sendMail({
+        to: email,
+        subject: 'Reset your password',
+        text: link ? `Click to reset your password: ${link}` : `Your reset token: ${token}`,
+        html: link ? `<p>Click to reset your password:</p><p><a href="${link}">${link}</a></p>` : `<p>Your reset token:</p><pre>${token}</pre>`,
+      }).catch(() => false)
+      if (!ok) req.log.info({ to: email, token, link }, 'Password reset token (email not configured; logged only)')
+    }
+    return reply.send({ ok: true })
+  })
+  // Verify email
+  app.post('/auth/verify-email', {
+    schema: { operationId: 'authVerifyEmail', tags: ['auth'], body: { type: 'object', required: ['token'], properties: { token: { type: 'string' } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } }, 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid or expired token' } } } },
+    config: { rateLimit: { max: 20, timeWindow: '10 minute' } }
+  }, async (req: any, reply) => {
+    const { token } = req.body as { token: string }
+    const row = await (prisma as any).emailVerifyToken.findUnique({ where: { token } })
+    if (!row || row.usedAt || row.expiresAt < new Date()) return reply.code(400).send({ error: 'Invalid or expired token' })
+    await prisma.$transaction([
+      (prisma as any).user.update({ where: { id: row.userId }, data: { emailVerifiedAt: new Date() } as any }),
+      (prisma as any).emailVerifyToken.update({ where: { token }, data: { usedAt: new Date() } })
+    ])
+    return reply.send({ ok: true })
+  })
+
+  // Request password reset
+  app.post('/auth/request-password-reset', {
+    schema: { operationId: 'authRequestPasswordReset', tags: ['auth'], body: { type: 'object', required: ['email'], properties: { email: { type: 'string', format: 'email' } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } } } },
+    config: { rateLimit: { max: 5, timeWindow: '10 minute', keyGenerator: (req:any)=> `pr:${(req.body as any)?.email || req.ip}` } }
+  }, async (req: any, reply) => {
+    const { email } = req.body as { email: string }
+    const user = await prisma.user.findUnique({ where: { email }, select: { id: true } })
+    if (user) {
+      const token = crypto.randomBytes(24).toString('hex')
+      const ttlMin = Number(process.env.PASSWORD_RESET_TTL_MIN || 30)
+      const expiresAt = new Date(Date.now() + ttlMin*60*1000)
+      await (prisma as any).passwordResetToken.create({ data: { userId: user.id, token, expiresAt } })
+      req.log.info({ to: email, token }, 'Password reset token issued')
+    }
+    return reply.send({ ok: true })
+  })
+
+  // Reset password
+  app.post('/auth/reset-password', {
+    schema: { operationId: 'authResetPassword', tags: ['auth'], body: { type: 'object', required: ['token','newPassword'], properties: { token: { type: 'string' }, newPassword: { type: 'string', minLength: 6 } }, additionalProperties: false }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } }, 400: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Invalid or expired token' } } } },
+    config: { rateLimit: { max: 20, timeWindow: '10 minute' } }
+  }, async (req: any, reply) => {
+    const { token, newPassword } = req.body as { token: string; newPassword: string }
+    const row = await (prisma as any).passwordResetToken.findUnique({ where: { token } })
+    if (!row || row.usedAt || row.expiresAt < new Date()) return reply.code(400).send({ error: 'Invalid or expired token' })
+    const passwordHash = await bcrypt.hash(newPassword, 10)
+    await prisma.$transaction([
+      (prisma as any).user.update({ where: { id: row.userId }, data: { passwordHash } as any }),
+      (prisma as any).passwordResetToken.update({ where: { token }, data: { usedAt: new Date() } }),
+      prisma.refreshToken.updateMany({ where: { userId: row.userId, revokedAt: null }, data: { revokedAt: new Date() } })
+    ])
+    return reply.send({ ok: true })
+  })
+
   // Sessions: revoke all (alias)
   app.post('/auth/sessions/revoke-all', {
     schema: { operationId: 'authSessionsRevokeAll', tags: ['auth'], response: { 200: { type: 'object', properties: { count: { type: 'integer' } } } } },
@@ -287,9 +413,9 @@ export default async function authRoutes(app: FastifyInstance) {
   })
 
   // GET /auth/me
-  app.get('/auth/me', { schema: { operationId: 'authMe', tags: ['auth'], response: { 200: { type: 'object', properties: { user: { type: 'object', properties: { id: { type: 'string' }, email: { type: 'string' }, role: { type: 'string', enum: ['ADMIN','DRIVER','RIDER'] }, firstName: { type: 'string' }, lastName: { type: 'string' } } } } }, 401: { type: 'object', properties: { error: { type: 'string' } } } } } }, async (req: any, reply) => {
+  app.get('/auth/me', { schema: { operationId: 'authMe', tags: ['auth'], response: { 200: { type: 'object', properties: { user: { type: 'object', properties: { id: { type: 'string' }, email: { type: 'string' }, role: { type: 'string', enum: ['ADMIN','DRIVER','RIDER'] }, firstName: { type: 'string' }, lastName: { type: 'string' }, emailVerifiedAt: { anyOf: [{ type: 'string', format: 'date-time' }, { type: 'null' }] } } } } }, 401: { type: 'object', properties: { error: { type: 'string' } } } } } }, async (req: any, reply) => {
     try { await req.jwtVerify() } catch { return (reply as any).code(401).send({ error: 'Unauthorized' }) }
-    const user = await prisma.user.findUnique({ where: { id: req.user.id as string }, select: { id: true, email: true, role: true, firstName: true, lastName: true } })
+    const user = await prisma.user.findUnique({ where: { id: req.user.id as string }, select: { id: true, email: true, role: true, firstName: true, lastName: true, emailVerifiedAt: true } as any })
     return reply.send({ user })
   })
 }

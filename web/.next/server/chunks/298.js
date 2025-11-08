@@ -1,0 +1,1 @@
+"use strict";exports.id=298,exports.ids=[298],exports.modules={7298:(e,t,r)=>{r.r(t),r.d(t,{default:()=>s});let s=(0,r(8570).createProxy)(String.raw`/app/src/components/ClientShell.tsx#default`)}};

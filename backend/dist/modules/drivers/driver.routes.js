@@ -99,7 +99,8 @@ async function driverRoutes(app) {
     };
     const responseOk = {
         200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } },
-        401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }
+        401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } },
+        403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } }
     };
     // /drivers/status (original)
     app.post('/drivers/status', {

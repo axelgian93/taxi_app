@@ -43,12 +43,16 @@ import adminTripsDetailedRoutes from './modules/admin/admin.trips.detailed.route
 import adminRevenueRoutes from './modules/admin/admin.revenue.routes'
 import adminTariffRoutes from './modules/admin/admin.tariff.routes'
 import adminMigrationsRoutes from './modules/admin/admin.migrations.routes'
+import adminAnalyticsRoutes from './modules/admin/admin.analytics.routes'
+import adminOpsRoutes from './modules/admin/admin.ops.routes'
+import adminDemoRoutes from './modules/admin/admin.demo.routes'
 import userRoutes from './modules/users/user.routes'
 import riderRoutes from './modules/rider/rider.routes'
 import paymentRoutes from './modules/payments/payment.routes.utf8'
 import paymentAdminExtRoutes from './modules/payments/payment.admin.ext.routes'
 import stripeWebhookRoutes from './modules/payments/stripe.webhook.routes'
 import paymentSetupRoutes from './modules/payments/payment.setup.routes'
+import pushRoutes from './modules/push/push.routes'
 import prisma from './lib/prisma'
 let Redis: any = null
 try { Redis = require('ioredis') } catch {}
@@ -56,16 +60,10 @@ try { Redis = require('ioredis') } catch {}
 const PORT = Number(process.env.PORT || 8080)
 const NODE_ENV = process.env.NODE_ENV || 'development'
 
-function parseCorsOrigin(): true | string[] {
-  const raw = (process.env.CORS_ORIGIN || '*').trim()
-  const isProd = (NODE_ENV === 'production')
-  if (raw === '*' || raw === 'true') {
-    // In production, do not allow wildcard CORS; require explicit allowlist
-    if (isProd) return []
-    return true
-  }
+function parseCorsAllowlist(): Set<string> {
+  const raw = (process.env.CORS_ORIGIN || '').trim()
   const parts = raw.split(',').map(s => s.trim()).filter(Boolean)
-  return parts.length ? parts : ['http://localhost:3000']
+  return new Set(parts)
 }
 
 const RL_MAX = Number(process.env.RATE_LIMIT_MAX || 200)
@@ -82,7 +80,24 @@ async function buildServer(): Promise<FastifyInstance> {
       : true
   })
 
-  await app.register(cors, { origin: parseCorsOrigin(), credentials: true })
+  // Strict CORS in production: require explicit allowlist via CORS_ORIGIN
+  if (NODE_ENV === 'production') {
+    const allowlist = parseCorsAllowlist()
+    await app.register(cors, {
+      origin: (origin, cb) => {
+        // Allow non-browser or same-origin requests (no Origin header)
+        if (!origin) return cb(null, true)
+        if (allowlist.size === 0) return cb(new Error('CORS: origin not allowed'), false)
+        cb(null, allowlist.has(origin))
+      },
+      credentials: true,
+      methods: ['GET','HEAD','PUT','PATCH','POST','DELETE'],
+      allowedHeaders: ['Authorization','Content-Type','Accept','X-Requested-With']
+    })
+  } else {
+    // Dev: allow all by default
+    await app.register(cors, { origin: true, credentials: true })
+  }
   await app.register(swagger, {
     openapi: {
       openapi: '3.0.3',
@@ -118,8 +133,9 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(driverPresencePlugin)
   // Ensure operationId mapping is applied as routes are registered
   await app.register(opIdsPlugin)
-  // Inject default error response schemas (401/403/409/429) if missing
   await app.register(errorSchemasPlugin)
+  // Require verified email for sensitive routes (drivers, payments setup)
+  await app.register(require('./plugins/require-verified').default)
   // Default rate-limit for admin export endpoints (applies on route registration)
   await app.register(adminExportRateLimitPlugin)
   // ETag/Cache-Control for admin export endpoints (applies onSend)
@@ -203,6 +219,9 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(adminUsersRoutes)
   await app.register(adminTripsDetailedRoutes)
   await app.register(adminRevenueRoutes)
+  await app.register(adminAnalyticsRoutes)
+  await app.register(adminOpsRoutes)
+  await app.register(adminDemoRoutes)
   await app.register(adminTariffRoutes)
   await app.register(adminMigrationsRoutes)
   await app.register(userRoutes)
@@ -213,6 +232,7 @@ async function buildServer(): Promise<FastifyInstance> {
   await app.register(webhooksRawPlugin)
   await app.register(stripeWebhookRoutes, { prefix: '/webhooks' })
   await app.register(paymentSetupRoutes)
+  await app.register(pushRoutes)
 
   return app
 }
@@ -228,6 +248,7 @@ main().catch(err => {
   console.error('❌ Error al iniciar el servidor:', err)
   process.exit(1)
 })
+
 
 
 

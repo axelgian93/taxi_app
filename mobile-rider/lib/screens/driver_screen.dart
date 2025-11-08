@@ -105,7 +105,8 @@ class _DriverScreenState extends State<DriverScreen> {
         }),
       );
     } catch (e) {
-      if (mounted) setState(() { _error = 'Send location failed: $e'; });
+      final msg = e.toString();
+      if (mounted) setState(() { _error = (msg.contains('403') || msg.toLowerCase().contains('not verified')) ? 'Email not verified. Go to Login > Verify email.' : 'Send location failed: $e'; });
     }
   }
 

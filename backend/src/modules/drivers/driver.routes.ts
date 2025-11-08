@@ -106,7 +106,8 @@ export default async function driverRoutes(app: FastifyInstance) {
 
   const responseOk = {
     200: { type: 'object', properties: { ok: { type: 'boolean' } }, example: { ok: true } },
-    401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } }
+    401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } },
+    403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Email not verified' } }
   } as const
 
   // /drivers/status (original)
@@ -143,7 +144,7 @@ export default async function driverRoutes(app: FastifyInstance) {
     (req, reply) => handleReport(app, req, reply),
   )
 
-  // Lista de viajes activos asignados al driver actual
+  // Lista de viajes activos/asignados al driver actual
   app.get(
     '/drivers/my-trips/active',
     {
@@ -151,7 +152,7 @@ export default async function driverRoutes(app: FastifyInstance) {
         operationId: 'driverMyTripsActive',
         tags: ['drivers'],
         summary: 'Mis viajes activos',
-        description: 'Lista viajes del driver con estado ACCEPTED/ARRIVED/STARTED.',
+        description: 'Lista viajes del driver con estado ASSIGNED/ACCEPTED/ARRIVED/STARTED.',
         response: {
           200: {
             type: 'object',
@@ -162,7 +163,7 @@ export default async function driverRoutes(app: FastifyInstance) {
                   type: 'object',
                   properties: {
                     id: { type: 'string' },
-                    status: { type: 'string', enum: ['ACCEPTED','ARRIVED','STARTED'] },
+                    status: { type: 'string', enum: ['ASSIGNED','ACCEPTED','ARRIVED','STARTED'] },
                     pickupLat: { type: 'number' },
                     pickupLng: { type: 'number' },
                     dropoffLat: { type: 'number' },
@@ -173,7 +174,7 @@ export default async function driverRoutes(app: FastifyInstance) {
                 }
               }
             },
-            example: { items: [ { id: 'trp_123', status: 'ACCEPTED', pickupLat: -2.17, pickupLng: -79.92, dropoffLat: -2.19, dropoffLng: -79.89, requestedAt: '2025-01-01T12:00:00.000Z', preferredMethod: 'CARD' } ] }
+            example: { items: [ { id: 'trp_123', status: 'ASSIGNED', pickupLat: -2.17, pickupLng: -79.92, dropoffLat: -2.19, dropoffLng: -79.89, requestedAt: '2025-01-01T12:00:00.000Z', preferredMethod: 'CARD' } ] }
           },
           401: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Unauthorized' } },
           403: { type: 'object', properties: { error: { type: 'string' } }, example: { error: 'Forbidden' } },
@@ -184,7 +185,7 @@ export default async function driverRoutes(app: FastifyInstance) {
     async (req: any, reply) => {
       const userId = req.user?.id as string
       const rows = await prisma.trip.findMany({
-        where: { driverId: userId, status: { in: ['ACCEPTED','ARRIVED','STARTED'] as any } },
+        where: { driverId: userId, status: { in: ['ASSIGNED','ACCEPTED','ARRIVED','STARTED'] as any } },
         orderBy: { requestedAt: 'desc' },
         take: 20,
         select: { id: true, status: true, pickupLat: true, pickupLng: true, dropoffLat: true, dropoffLng: true, requestedAt: true, pricingSnapshot: true }

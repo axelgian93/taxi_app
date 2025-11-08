@@ -5,6 +5,7 @@ import 'driver_screen.dart';
 import 'combined_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/platform_base_url.dart';
+import '../push_registrar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -81,6 +82,8 @@ class _LoginScreenState extends State<LoginScreen> {
       await prefs.setString('auth_token', token);
       await prefs.setString('refresh_token', refresh);
       if (!mounted) return;
+      // Register push token (best effort)
+      await PushRegistrar(api).registerIfPossible(role: 'RIDER');
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const RequestScreen()));
     } catch (e) {
       setState(() { _error = 'Login failed: $e'; });
@@ -183,7 +186,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.of(context).pushNamed('/history');
               },
               child: const Text('Ver historial de viajes'),
-            )
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              onPressed: _busy ? null : () {
+                Navigator.of(context).pushNamed('/verify');
+              },
+              child: const Text('Verificar email / Reset password'),
+            ),
           ],
         ),
       ),

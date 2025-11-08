@@ -1,0 +1,12 @@
+# DO NOT COMMIT THIS FILE (example only)
+# Path to the installed Android SDK. Copy to android/local.properties and edit accordingly.
+
+# macOS example
+sdk.dir=/Users/your_user/Library/Android/sdk
+
+# Windows example (note escaped backslashes)
+# sdk.dir=C\:\\Users\\your_user\\AppData\\Local\\Android\\Sdk
+
+# Linux example
+# sdk.dir=/home/your_user/Android/Sdk
+

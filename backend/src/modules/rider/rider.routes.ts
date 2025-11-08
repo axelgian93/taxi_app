@@ -1,6 +1,7 @@
 // src/modules/rider/rider.routes.ts
 import type { FastifyInstance } from 'fastify'
 import prisma from '../../lib/prisma'
+import { env } from '../../config/env'
 
 export default async function riderRoutes(app: FastifyInstance) {
   function encodeCursor(id: string, requestedAt: Date): string {
@@ -99,6 +100,73 @@ export default async function riderRoutes(app: FastifyInstance) {
       const last = rows[rows.length - 1]
       const nextCursor = last ? encodeCursor(last.id, last.requestedAt as any) : null
       return reply.send({ items, nextCursor })
+    }
+  )
+
+  // GET /rider/trips/:id/cancel/quote — Estimar tarifa de cancelación
+  app.get(
+    '/rider/trips/:id/cancel/quote',
+    {
+      schema: {
+        operationId: 'riderCancelQuote',
+        tags: ['rider'],
+        summary: 'Cotizar cancelación (rider)',
+        description: 'Devuelve el monto estimado de la tarifa de cancelación según estado y ventana de gracia.',
+        response: {
+          200: {
+            type: 'object',
+            properties: {
+              cancellable: { type: 'boolean' },
+              feeUsd: { type: 'number' },
+              currency: { type: 'string' },
+              reason: { type: 'string' },
+              graceRemainingSec: { type: 'integer', nullable: true }
+            },
+            example: { cancellable: true, feeUsd: 2.0, currency: 'USD', reason: 'AFTER_GRACE_ACCEPTED', graceRemainingSec: 0 }
+          },
+          401: { type: 'object', properties: { error: { type: 'string' } } },
+          403: { type: 'object', properties: { error: { type: 'string' } } },
+          404: { type: 'object', properties: { error: { type: 'string' } } }
+        }
+      },
+      preHandler: app.auth.requireRole('RIDER')
+    },
+    async (req: any, reply) => {
+      const userId = req.user?.id as string
+      const id = (req.params as any).id as string
+      if (!id) return reply.code(400).send({ error: 'Invalid id' })
+      const t = await prisma.trip.findUnique({ where: { id }, select: { id: true, riderId: true, status: true, requestedAt: true, acceptedAt: true, arrivedAt: true } as any })
+      if (!t) return reply.code(404).send({ error: 'Trip not found' })
+      if (t.riderId !== userId) return reply.code(403).send({ error: 'Forbidden' })
+      const now = Date.now()
+      const graceMs = Number(env.cancellationFeeGraceSec || 0) * 1000
+      const remaining = (from?: Date | null) => {
+        if (!from || !graceMs) return 0
+        const diff = now - new Date(from as any).getTime()
+        return Math.max(0, Math.floor((graceMs - diff) / 1000))
+      }
+      let fee = 0
+      let reason = 'NO_FEE'
+      let graceRemainingSec: number | null = null
+      let cancellable = true
+      const st = String(t.status)
+      if (st === 'REQUESTED' || st === 'ASSIGNED') {
+        fee = 0; reason = 'BEFORE_ACCEPT'; graceRemainingSec = null
+      } else if (st === 'ACCEPTED') {
+        const rem = remaining((t as any).acceptedAt || (t as any).requestedAt)
+        graceRemainingSec = rem
+        if (rem > 0) { fee = 0; reason = 'WITHIN_GRACE_ACCEPTED' }
+        else { fee = Number(env.cancellationFeeAcceptedUsd || 0); reason = 'AFTER_GRACE_ACCEPTED' }
+      } else if (st === 'ARRIVED') {
+        const rem = remaining((t as any).arrivedAt || (t as any).acceptedAt)
+        graceRemainingSec = rem
+        if (rem > 0) { fee = 0; reason = 'WITHIN_GRACE_ARRIVED' }
+        else { fee = Number(env.cancellationFeeArrivedUsd || 0); reason = 'AFTER_GRACE_ARRIVED' }
+      } else {
+        // STARTED/COMPLETED/CANCELED
+        cancellable = false; fee = 0; reason = 'NOT_CANCELLABLE'; graceRemainingSec = null
+      }
+      return reply.send({ cancellable, feeUsd: Number(fee || 0), currency: 'USD', reason, graceRemainingSec })
     }
   )
 }

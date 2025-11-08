@@ -1,0 +1,8 @@
+{
+  "items": [
+    { "key": "guayaquil", "name": "Guayaquil", "center": { "lat": -2.170998, "lng": -79.922359 }, "zoom": 12 },
+    { "key": "quito", "name": "Quito", "center": { "lat": -0.180653, "lng": -78.467834 }, "zoom": 12 },
+    { "key": "cuenca", "name": "Cuenca", "center": { "lat": -2.90055, "lng": -79.00453 }, "zoom": 12 }
+  ]
+}
+

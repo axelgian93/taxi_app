@@ -84,6 +84,8 @@ export function subscribeToTrip(tripId: string, handler: Handler): () => void {
   }
 }
 
+import { maybeNotifyOnTripEvent } from './push.service'
+
 export function publishTripEvent(tripId: string, ev: TripEvent): number {
   tryInitRedis()
   if (useRedis && redisPub) {
@@ -99,5 +101,7 @@ export function publishTripEvent(tripId: string, ev: TripEvent): number {
   for (const h of s) {
     try { h(ev) } catch {}
   }
+  // Fire-and-forget push notification (best effort)
+  try { maybeNotifyOnTripEvent(tripId, ev) } catch {}
   return s.size
 }

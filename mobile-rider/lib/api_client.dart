@@ -42,6 +42,56 @@ class ApiClient {
   // Expose Dio for ad-hoc calls (endpoints not in SDK)
   Dio get dio => _open.dio;
 
+  Future<bool> isEmailVerified() async {
+    try {
+      final r = await _open.dio.get('/auth/me');
+      if (r.statusCode == 200 && r.data is Map) {
+        final m = r.data as Map;
+        if (m['user'] is Map) {
+          final u = m['user'] as Map;
+          return u['emailVerifiedAt'] != null;
+        }
+      }
+    } catch (_) {}
+    return true; // default non-blocking
+  }
+
+  // Auth helpers not in SDK yet
+  Future<bool> requestVerifyEmail() async {
+    final r = await _open.dio.post(
+      '/auth/request-verify-email',
+      options: Options(headers: {'content-type': 'application/json'}),
+    );
+    return r.statusCode == 200;
+  }
+
+  Future<bool> verifyEmail(String token) async {
+    final r = await _open.dio.post(
+      '/auth/verify-email',
+      options: Options(headers: {'content-type': 'application/json'}),
+      data: {'token': token},
+    );
+    return r.statusCode == 200;
+  }
+
+  Future<bool> requestPasswordReset(String email) async {
+    final r = await _open.dio.post(
+      '/auth/request-password-reset',
+      options: Options(headers: {'content-type': 'application/json'}),
+      data: {'email': email},
+    );
+    return r.statusCode == 200;
+  }
+
+  Future<bool> resetPassword(String token, String newPassword) async {
+    final r = await _open.dio.post(
+      '/auth/reset-password',
+      options: Options(headers: {'content-type': 'application/json'}),
+      data: {'token': token, 'newPassword': newPassword},
+    );
+    return r.statusCode == 200;
+  }
+
   bool _interceptorInstalled = false;
   void _installInterceptorOnce() {
     if (_interceptorInstalled) return;

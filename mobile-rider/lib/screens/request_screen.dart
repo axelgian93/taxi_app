@@ -30,6 +30,20 @@ class _RequestScreenState extends State<RequestScreen> {
   dynamic _sse; // subscription handle
   LatLng? _driverPos;
   DateTime? _lastLocAt;
+  bool _verified = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkVerified();
+  }
+
+  Future<void> _checkVerified() async {
+    try {
+      final ok = await ApiClient().isEmailVerified();
+      if (mounted) setState(() { _verified = ok; });
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -74,9 +88,13 @@ class _RequestScreenState extends State<RequestScreen> {
       } catch (_) {}
       await _startSse();
     } catch (e) {
-      setState(() {
-        _error = 'Request failed: $e';
-      });
+      final msg = e.toString();
+      // If backend enforces verified email, guide user
+      if (msg.contains('403') || msg.toLowerCase().contains('not verified')) {
+        setState(() { _error = 'Email not verified. Please verify your email.'; });
+      } else {
+        setState(() { _error = 'Request failed: $e'; });
+      }
     } finally {
       setState(() {
         _busy = false;
@@ -190,10 +208,19 @@ class _RequestScreenState extends State<RequestScreen> {
               Expanded(child: TextField(controller: _dur, decoration: const InputDecoration(labelText: 'Duration Min'))),
             ]),
             const SizedBox(height: 12),
-            if (_error != null) Text(_error!, style: const TextStyle(color: Colors.red)),
+            if (_error != null) ...[
+              Row(children:[
+                Expanded(child: Text(_error!, style: const TextStyle(color: Colors.red))),
+                if ((_error??'').toLowerCase().contains('not verified'))
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pushNamed('/verify'),
+                    child: const Text('Verify now'),
+                  ),
+              ])
+            ],
             const SizedBox(height: 12),
             Row(children: [
-              ElevatedButton(onPressed: _busy ? null : _request, child: const Text('Request Trip')),
+              ElevatedButton(onPressed: _busy || !_verified ? null : _request, child: const Text('Request Trip')),
               const SizedBox(width: 12),
               ElevatedButton(onPressed: _tripId == null ? null : _cancel, child: const Text('Cancel Trip')),
               const SizedBox(width: 12),

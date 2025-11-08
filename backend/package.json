@@ -42,6 +42,10 @@
                     "smoke:security-authz":  "ts-node --transpile-only scripts/smoke-security-authz.ts",
                     "smoke:security-hpp":  "ts-node --transpile-only scripts/smoke-security-hpp.ts",
                     "smoke:security-csp":  "ts-node --transpile-only scripts/smoke-security-csp.ts",
+                    "smoke:security-sse":  "ts-node --transpile-only scripts/smoke-security-sse.ts",
+                    "smoke:security-cors":  "ts-node --transpile-only scripts/smoke-security-cors.ts",
+                    "smoke:security-login-rl":  "ts-node --transpile-only scripts/smoke-security-login-rl.ts",
+                    "smoke:security": "ts-node --transpile-only scripts/smoke-security-all.ts",
                     "smoke:login-rl":  "ts-node --transpile-only scripts/smoke-login-rl.ts"
                 },
     "dependencies":  {
@@ -76,3 +80,4 @@
                             "typescript":  "^5.9.3"
                         }
 }
+

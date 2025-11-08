@@ -62,6 +62,7 @@ model User {
   lastName                     String
   role                         Role     @default(RIDER)
   isActive                     Boolean  @default(true)
+  emailVerifiedAt              DateTime?
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
@@ -71,6 +72,8 @@ model User {
   tripsAsRider  Trip[]         @relation("RiderTrips")
   tripsAsDriver Trip[]         @relation("DriverTrips")
   refreshTokens RefreshToken[]
+  emailVerifyTokens EmailVerifyToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([role])
   @@index([isActive])
@@ -259,6 +262,32 @@ model RefreshToken {
   expiresAt DateTime
   revokedAt DateTime?
   createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerifyToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([expiresAt])

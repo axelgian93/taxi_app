@@ -50,6 +50,22 @@ services:
     restart: unless-stopped
     profiles: ["prod"]
 
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: taxi_web_3001
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:8080
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "3001:3000"
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["prod"]
+
   # ---------- MONITOREO (Prometheus + Grafana) ----------
   prometheus:
     image: prom/prometheus:v2.55.1
@@ -71,7 +87,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin123
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3100:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./infra/grafana/provisioning:/etc/grafana/provisioning
@@ -131,9 +147,35 @@ services:
     restart: unless-stopped
     profiles: ["dev"]
 
+  web-dev:
+    image: node:22-alpine
+    container_name: taxi_web_dev
+    working_dir: /app
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=1
+      - NEXT_TELEMETRY_DISABLED=1
+      - NEXT_PUBLIC_API_BASE=http://localhost:8081
+    command: >
+      sh -c "
+      npm ci &&
+      npm run dev
+      "
+    volumes:
+      - ./web:/app
+      - web_node_deps:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      api-dev:
+        condition: service_started
+    restart: unless-stopped
+    profiles: ["dev"]
+
 volumes:
   db_data:
   redis_data:
   prom_data:
   grafana_data:
   node_deps:
+  web_node_deps:

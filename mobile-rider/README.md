@@ -3,6 +3,7 @@
 Prerequisites
 - Flutter SDK 3.3+
 - Backend running locally (http://127.0.0.1:8080)
+ - (Opcional) Firebase para push (FCM): ver abajo
 
 Setup
 1) Install deps
@@ -12,6 +13,7 @@ Setup
 2) Run
    - Android emulator: flutter run (Base URL defaults to http://10.0.2.2:8080)
    - iOS simulator: flutter run (Base URL defaults to http://127.0.0.1:8080)
+   - Con defines: flutter run --dart-define=ENV=dev --dart-define=BASE_URL=http://10.0.2.2:8081
 
 3) Users (after backend bootstrap)
    rider@taxi.local / 123456
@@ -28,5 +30,11 @@ Notes
 - For GPS location (Driver): grant location permissions on device/emulator.
   - Android: enable location in emulator; if needed, add mock location.
   - iOS: emulator requires Location set in Features > Location; for real device, ensure permissions.
+
+Push (FCM)
+- El código intenta registrar token FCM si Firebase está configurado.
+- Android: agrega `google-services.json` en `android/app/` y aplica plugin `com.google.gms.google-services`.
+- iOS: agrega `GoogleService-Info.plist` en `ios/Runner/` y activa capacidades.
+- Backend: variable `FCM_SERVER_KEY` debe estar definida para envíos reales.
 
 

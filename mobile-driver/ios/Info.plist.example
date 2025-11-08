@@ -1,0 +1,20 @@
+<!-- Example additions for ios/Runner/Info.plist -->
+<!-- Merge these keys into your existing Info.plist -->
+<plist version="1.0">
+<dict>
+  <!-- Location permission messages -->
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Necesitamos tu ubicación para asignarte viajes cercanos.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Compartiremos tu ubicación durante el viaje incluso en segundo plano.</string>
+
+  <!-- Background modes: enable Location updates in Xcode as well -->
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>location</string>
+  </array>
+
+  <!-- (Opcional) Si integras otras capacidades, agrega aquí -->
+</dict>
+</plist>
+

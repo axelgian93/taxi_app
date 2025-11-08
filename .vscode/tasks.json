@@ -1,0 +1,193 @@
+﻿{
+    "version":  "2.0.0",
+    "tasks":  [
+                  {
+                      "label":  "mobile-rider: dev",
+                      "type":  "shell",
+                      "command":  "flutter",
+                      "args":  [
+                                   "run",
+                                   "-d",
+                                   "chrome"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-rider"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "mobile-driver: create",
+                      "type":  "shell",
+                      "command":  "flutter",
+                      "args":  [
+                                   "create",
+                                   "."
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "mobile-driver: dev",
+                      "type":  "shell",
+                      "command":  "flutter",
+                      "args":  [
+                                   "run"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "mobile-driver: iOS check",
+                      "type":  "shell",
+                      "command":  "dart",
+                      "args":  [
+                                   "run",
+                                   "tool/check_ios_setup.dart"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  },
+                      "problemMatcher":  [
+
+                                         ]
+                  },
+                  {
+                      "label":  "mobile-rider: dev (dart-define)",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--dart-define=ENV=dev",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8081"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-rider"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-driver: dev (dart-define)",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--dart-define=ENV=dev",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8081"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-driver: prod (dart-define)",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--dart-define=ENV=prod",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8080"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-driver: dev flavor",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--flavor",
+                                   "dev",
+                                   "-t",
+                                   "lib/main.dart",
+                                   "--dart-define=ENV=dev",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8081"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-driver: prod flavor",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--flavor",
+                                   "prod",
+                                   "-t",
+                                   "lib/main.dart",
+                                   "--dart-define=ENV=prod",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8080"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-driver"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-rider: dev flavor",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--flavor",
+                                   "dev",
+                                   "-t",
+                                   "lib/main.dart",
+                                   "--dart-define=ENV=dev",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8081"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-rider"
+                                  }
+                  },
+                  {
+                      "label":  "mobile-rider: prod flavor",
+                      "problemMatcher":  [
+
+                                         ],
+                      "command":  "flutter",
+                      "type":  "shell",
+                      "args":  [
+                                   "run",
+                                   "--flavor",
+                                   "prod",
+                                   "-t",
+                                   "lib/main.dart",
+                                   "--dart-define=ENV=prod",
+                                   "--dart-define=BASE_URL=http://10.0.2.2:8080"
+                               ],
+                      "options":  {
+                                      "cwd":  "mobile-rider"
+                                  }
+                  }
+              ]
+}
